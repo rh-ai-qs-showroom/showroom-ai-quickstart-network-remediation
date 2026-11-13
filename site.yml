@@ -1,7 +1,6 @@
 ---
 site:
-  title: Showroom Template Demo
-  url: https://github.com/rhpds/showroom_template_nookbag
+  title: AI-Driven Network Remediation
   start_page: modules::index.adoc
 
 content:

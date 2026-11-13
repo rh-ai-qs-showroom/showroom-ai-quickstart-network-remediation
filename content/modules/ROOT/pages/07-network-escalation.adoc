@@ -1,0 +1,86 @@
+= Module 5: Follow an intentional escalation
+:toc: macro
+:toclevels: 1
+
+An on-call engineer needs a useful handoff when the system cannot justify a safe automated change. This scenario supplies incomplete evidence so you can inspect the escalation path and its mock ticket.
+
+Estimated time: 10 minutes.
+
+== Learning objectives
+
+* Distinguish successful escalation from successful remediation.
+* Inspect the mock ServiceNow record associated with an incident.
+* Identify the evidence a human needs before approving a corrective action.
+
+== Exercise 1: Trigger the handoff
+
+. In the *Network dashboard*, click *Trigger Escalation Demo* once.
+. Record the *Incident ID*, Kafka *Topic* and *Offset*, and the *Event*. The simulated input describes intermittent failures without an identified affected component or safe corrective change.
+. Expand *Incident Timeline* and find the matching incident. Record its stage, summary, *AAP Job*, and *SNOW* ticket number. The intended outcome is *Escalated* with a mock ticket. The LLM may assess each run differently; investigate the actual result.
+. Correlate the execution in the application namespace's `agent-service` pod *Logs*. Inspect available analysis and decision entries and the ticket-creation result. A failed remediation can also lead here after an AAP launch failure, unsuccessful job, or timeout.
+
+=== Verify
+
+* You have a matching audit outcome and a recorded ticket number when ticket creation succeeded.
+* You distinguish the reason automation could not proceed from the result of creating the ticket.
+
+== Exercise 2: Read the mock ticket
+
+The dashboard exposes the ticket number, rather than a ServiceNow ticket-detail screen. Inspect the record through a facilitator-assisted read of the tenant's mock API.
+
+[NOTE]
+====
+The packaged learner role grants read-only console access and does not grant pod terminal access. Ask an authorized facilitator to run the lookup below in your assigned tenant and share only the resulting ticket fields. You inspect that output alongside your incident notes; no extra learner permissions are needed.
+====
+
+. Give the facilitator your application namespace and the *SNOW* number from your matching timeline card.
+. The facilitator selects your application namespace in the *OpenShift Console*, opens *Workloads → Pods*, selects `servicenow-mock`, and opens its *Terminal* tab. They replace `TICKET_NUMBER_FROM_YOUR_INCIDENT` below with your number and run this local read-only lookup. Credentials are read from the pod environment and are not printed.
++
+[source,shell]
+----
+python - <<'PY'
+import base64
+import json
+import os
+from urllib.parse import urlencode
+from urllib.request import Request, urlopen
+
+ticket = "TICKET_NUMBER_FROM_YOUR_INCIDENT"
+query = urlencode({"sysparm_query": f"number={ticket}", "sysparm_limit": 1})
+request = Request(f"http://localhost:8080/api/now/table/incident?{query}")
+credentials = os.environ["SERVICENOW_USERNAME"] + ":" + os.environ["SERVICENOW_PASSWORD"]
+request.add_header("Authorization", "Basic " + base64.b64encode(credentials.encode()).decode())
+with urlopen(request, timeout=10) as response:
+    records = json.load(response)["result"]
+if not records:
+    raise SystemExit("No matching mock ticket. Check the number and tenant namespace.")
+record = records[0]
+for field in ("number", "short_description", "priority", "state", "description"):
+    print(f"{field}: {record.get(field, 'unavailable')}")
+PY
+----
+
+. Compare the ticket number, target namespace and pod, assessed failure type, confidence, evidence, and recommended actions with your incident notes. If automation was attempted and failed, look for the failed action, available job ID, and output in the description.
+. Identify what a human must investigate next. Missing or weak evidence is part of the handoff; do not replace it with a chat-generated explanation.
+
+=== Verify
+
+* The returned ticket number matches the incident's *SNOW* artifact.
+* The ticket provides operational context for a human review.
+* You describe the ticket as simulated ServiceNow storage within this tenant. The mock keeps records in memory; restarting it can remove them.
+
+== Interpret a failed remediation result
+
+The audit field `remediation_success` describes corrective automation. With no successful corrective action, it is false, even when ticket creation succeeds. The timeline can therefore report *Escalated* with a summary containing `Result: failed` and a valid *SNOW* number. That combination means remediation did not succeed and the handoff did. Confirm the ticket artifact instead of treating the word `failed` as proof that ticket creation failed.
+
+=== Troubleshooting
+
+If *SNOW* is `n/a`, inspect the agent logs for a ServiceNow error and check the mock and MCP dependencies. An *Escalated* label alone does not prove ticket creation. If the lookup returns no record, check the exact number, tenant namespace, and whether the mock restarted. The dashboard's generic Slack or Langfuse references do not require either service in this profile.
+
+== Check your understanding
+
+What would justify pausing automation even when the LLM sounds confident?
+
+Expected answer: missing evidence, an unsupported corrective action, or a failed or unavailable playbook-match guard. A human should review the handoff before changing a real system.
+
+Continue to xref:08-ran-workflow.adoc[run the separate RAN workflow]. RAN does not use Network's ServiceNow escalation path.

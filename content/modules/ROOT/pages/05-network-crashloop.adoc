@@ -1,0 +1,68 @@
+= Module 3: Follow the Network happy path
+:toc: macro
+:toclevels: 1
+
+You are the on-call engineer reviewing a proposed response to a stalled nginx worker. Follow one incident from its demo alert to its audit record. The intended happy path selects an existing restart playbook and completes a mock automation job.
+
+Estimated time: 15 minutes.
+
+== Learning objectives
+
+* Correlate a demo alert, workflow execution, and dashboard outcome.
+* Explain how Kubernetes observations and retrieved runbooks inform LLM analysis.
+* Distinguish a guarded automation decision from proof of workload recovery.
+
+== Exercise 1: Trigger and identify an incident
+
+. Open the *Network dashboard* and locate *Demo Mode*.
+. Click *Trigger CrashLoop Demo* once. Record the returned *Incident ID*, *Topic*, *Offset*, *Target*, and *Event* before triggering another scenario.
+. Read the event. It describes a `CrashLoopBackOff` condition and proposes a restart. This is a simulated alert published through real Kafka messaging; the button does not itself crash a pod.
+. In *Incident Timeline*, click *Expand*. Wait for the card with your incident ID. Record its stage, summary, *AAP Job*, and *SNOW* values. Processing and dashboard refresh are asynchronous.
+
+[IMPORTANT]
+====
+The timeline summarizes completed audit records. It does not display every graph node as a live sequence. The LLM can choose a different outcome on another run. Preserve the actual incident ID and evidence instead of repeatedly clicking until the text matches an example.
+====
+
+=== Verify
+
+* The trigger result identifies the scenario and Kafka offset.
+* A matching incident card appears, or you have recorded that it is still missing and investigated the dependency health.
+* You have captured the actual outcome, including any escalation.
+
+== Exercise 2: Explain the decision path
+
+. Open the *OpenShift Console*. In the application namespace identified in your lab details, open *Workloads → Pods*, select the `agent-service` pod, and open *Logs*. Keep other learners' namespaces outside your investigation.
+. Find the workflow invocation with the topic and offset you recorded. Locate the completion message containing your incident ID. Within that interval, inspect available entries for normalization, investigation, RAG retrieval, analysis, the decision, and the playbook guard. Log detail depends on the deployed log level; record missing details as unavailable.
+. Use this sequence to explain the roles of the components:
++
+[cols="1,3",options="header"]
+|===
+|Stage |What it contributes
+|Normalization and investigation |Structure the simulated alert and obtain real Kubernetes observations through MCP tools.
+|Runbook retrieval |Search the ingested knowledge base for relevant operational guidance.
+|LLM analysis |Combine the alert, available observations, and retrieved context into a root-cause assessment and recommendations.
+|Decision and guard |Check confidence and whether the candidate playbook fits the assessed cause. The expected CrashLoop candidate is `restart-nginx`; a guard error causes escalation.
+|Action and audit |Launch and poll the mock AAP job, or create a mock ServiceNow escalation, then publish the incident outcome to Kafka.
+|===
+
+. Return to the matching timeline card. Compare its summary and artifacts with the available logs. If a job ran, record its ID and result. A successful path can display *Auto-Remediated* or *Remediated*, depending on whether a ticket was also recorded.
+. In *NOC Chat*, ask: `Explain the difference between a successful mock AAP job and verified Kubernetes recovery.` Check the model source below the response. Treat this as an explanation: chat receives recent audit summaries and integration status, not the complete investigation or every incident's evidence.
+
+=== Verify
+
+* You can connect the incident ID and offset to an audit outcome.
+* You can explain why a template match is checked before execution.
+* You describe mock AAP success as an automation-contract result. The separate edge fast-path watcher and runner can really modify `edge-nginx`; their activity must be assessed separately.
+
+=== Troubleshooting
+
+If no card appears, check Kafka and agent health using xref:04-readiness.adoc[deployment readiness]. A successful publish only queues work. If the guard rejects the restart, inspect the outcome and ticket instead of assuming the system is broken. An unavailable model or tool is a dependency problem and must be distinguished from an evidence-based escalation.
+
+== Check your understanding
+
+Why can the alert describe a CrashLoop while the current Kubernetes observations show a healthy workload?
+
+Expected answer: the alert input is simulated, while Kubernetes observations are real and reflect the current tenant workload. The analysis must assess both sources; the alert alone does not prove the present cluster state.
+
+Continue to xref:06-network-oom.adoc[compare an OOM remediation].

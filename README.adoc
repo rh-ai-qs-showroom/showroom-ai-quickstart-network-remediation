@@ -1,34 +1,45 @@
-= Showroom Template
+= AI-Driven Network Remediation Showroom
 
-A template for creating Red Hat Showroom lab guides and demo content, built with https://antora.org[Antora].
+Draft hands-on workshop for the AI-Driven Network Remediation quickstart.
+The walkthrough covers Network investigation, remediation, and escalation, followed by RAN anomaly detection and root-cause analysis.
 
-* 0% cruft
-* Red Hat Demo Platform UI Bundle default
-* Dev Mode extension that displays the asciidoc attributes you have to work with
+== Read the workshop
 
-== Documentation
+Start at link:content/modules/ROOT/pages/index.adoc[the welcome page].
+The eight modules follow the sequence in link:content/modules/ROOT/nav.adoc[the navigation].
 
-Full documentation — getting started, content structure, configuration, local development, and AI-assisted content creation — is available at:
+The profile uses one OpenShift cluster, a tenant application namespace, and a tenant-specific edge namespace.
+Both RAN predictors run locally on CPU.
+LLM inference uses real external MaaS.
+AAP execution and Network ServiceNow tickets use tenant mocks.
 
-https://rhpds.github.io/showroom_template_nookbag/
+== Draft status
 
-== Quick Start
+The content is checked against the local quickstart source, including its in-progress tenant packaging.
+Installation, runtime URL/user-data wiring, reset, and teardown must pass a fresh RHDP lifecycle test before publication.
+No live deployment verification is claimed.
 
-. https://github.com/rhpds/showroom_template_nookbag/generate[Create a repo from this template] (suggested naming: `<lab-name>-showroom`)
-. Clone your new repo and preview locally:
-+
-[source,sh]
+See link:docs/authoring-and-validation.adoc[authoring notes and publication validation] for the proposed runtime attributes, evidence sources, and outstanding checks.
+
+== Build locally
+
+From this repository root, install the same Antora components used by the existing workflow into an ignored tools directory:
+
+[source,shell]
 ----
-podman run --rm --name antora -v $PWD:/antora -p 8080:8080 -i -t ghcr.io/juliaaano/antora-viewer
+npm install --prefix .cache/antora-tools --cache .cache/npm --no-audit --no-fund \
+  @antora/cli@3.1 @antora/site-generator@3.1 \
+  @sntke/antora-mermaid-extension@0.0.13 @andrew-jones/antora-tabs-extension
+NODE_PATH="$PWD/.cache/antora-tools/node_modules" \
+  .cache/antora-tools/node_modules/.bin/antora --clean --log-failure-level warn site.yml
 ----
-+
-On SELinux systems, append `:z` to the volume mount.
 
-. Edit content in `content/modules/ROOT/pages/`
-. See the https://rhpds.github.io/showroom_template_nookbag/modules/content-repo.html[Content Repository] docs for directory layout, Podman Compose with live reload, dev mode, and more.
+The output is in `www/`.
+The initial build needs network access for dependencies and the UI bundle.
+Preview builds intentionally show namespace placeholders until provisioning supplies the assigned tenant attributes.
+The original template's authoring examples remain in `examples/`; template developer-guide pages were removed from the learner site.
 
-== Create Content with AI
+== Reference
 
-The https://github.com/rhpds/rhdp-skills-marketplace[RHDP Skills Marketplace] provides skills for Cursor IDE and Claude Code that generate labs, demos, and validate content against Red Hat standards.
-
-See the https://rhpds.github.io/showroom_template_nookbag/modules/content-repo.html#_creating_content_with_ai_tools[AI Tools documentation] for details.
+The link:https://github.com/rh-ai-qs-showroom/showroom-ai-quickstart-rag[RAG quickstart Showroom^] informed the access-first structure.
+Workflow descriptions and exercises are original and based on this quickstart's implementation.

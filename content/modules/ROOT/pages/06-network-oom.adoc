@@ -1,0 +1,70 @@
+= Module 4: Compare an OOM remediation
+:toc: macro
+:toclevels: 1
+
+The next alert describes memory exhaustion. Compare the selected action with the CrashLoop incident and assess whether the automation choice matches the evidence.
+
+Estimated time: 10 minutes.
+
+== Learning objectives
+
+* Compare two incidents without mixing their IDs or artifacts.
+* Explain why a resource-exhaustion assessment can select a different template.
+* Recognize independent edge actuation and duplicate-action suppression.
+
+== Exercise 1: Run the OOM scenario
+
+. In the *Network dashboard*, click *Trigger OOM Demo* once under *Demo Mode*.
+. Record the new *Incident ID*, *Topic*, *Offset*, *Target*, and *Event*. Keep these separate from the CrashLoop notes. The simulated message describes an `OOMKilled` condition, an exceeded memory limit, and restart history.
+. Expand *Incident Timeline* and locate the card with this incident ID after processing completes. Record the stage, summary, *AAP Job*, and *SNOW* fields.
+. In the application namespace's `agent-service` pod *Logs*, correlate the topic and offset with the workflow completion containing your incident ID, as in the previous module. Inspect available investigation, retrieval, analysis, and guard entries.
+. Compare the assessed failure type and action with the CrashLoop run. The expected template for an `OOMKilled` assessment is `scale-up-workers`, subject to sufficient confidence and the playbook-match guard. Record the action that actually ran, or the reason it did not run, wherever the logs or summary expose it.
+
+=== Verify
+
+* The OOM and CrashLoop incidents have separate correlation notes.
+* Your OOM result is based on its own matching card and available logs.
+* You have recorded the selected action and mock job outcome, or the actual escalation or duplicate-action suppression outcome.
+
+== Exercise 2: Compare the automation evidence
+
+. Fill in this comparison using your two runs. Use `unavailable` for details that the current log level or dashboard does not expose.
++
+[cols="2,2,2",options="header"]
+|===
+|Evidence |CrashLoop |OOM
+|Incident ID and Kafka offset |Your recorded values |Your recorded values
+|Simulated input |Stalled worker and restart hint |Memory-exhaustion message
+|Current Kubernetes observations |Your observations |Your observations
+|Retrieved guidance or retrieval errors |Available log evidence |Available log evidence
+|Assessed cause and selected action |Actual result |Actual result
+|Guard result, if exposed |Actual verdict |Actual verdict
+|Mock job ID/result or ticket |Actual artifacts |Actual artifacts
+|===
+
+. Explain why restarting a stalled worker and addressing resource exhaustion are different responses. The structured assessment guides the template mapping, and retrieved runbooks provide context. Neither a scenario name nor an LLM confidence score proves that a proposed change fixes the real workload.
+. Check whether the summary mentions that the deployment was already remediated and a duplicate AAP job was skipped. The independent edge fast-path watcher and runner can patch `edge-nginx`. A correlated recent edge heal can suppress the OOM flow's duplicate hub automation, leaving no AAP job ID for that action.
+. If your result shows a successful mock job, describe precisely what succeeded: the mock accepted the automation request and returned its simulated job result. Record real workload observations separately. Do not attribute a change made by the edge runner to the AAP mock.
+
+[NOTE]
+====
+`scale-up-workers` is the demo's mapped template for resource exhaustion. This exercise evaluates selection and job handling. A real deployment requires a playbook and parameters appropriate to the actual workload, plus recovery checks.
+====
+
+=== Verify
+
+* Your comparison explains the difference between the proposed restart and resource-exhaustion actions.
+* An empty AAP job field is interpreted alongside the stage, summary, and logs.
+* Your conclusion distinguishes real observations and edge mutations from simulated alert input and mock execution.
+
+=== Troubleshooting
+
+An escalation can be valid when the analysis or guard does not support automation. A missing job is also consistent with an explicitly recorded duplicate-action skip. If neither is recorded and the incident remains absent, revisit xref:04-readiness.adoc[deployment readiness]. Do not use *Reset Lightspeed Demo* to reset an OOM run; it targets a different demo outside this walkthrough.
+
+== Check your understanding
+
+Does a different template prove that the system diagnosed memory exhaustion correctly?
+
+Expected answer: no. It shows a different automation choice. Assess the available Kubernetes evidence, retrieved guidance, analysis, and guard outcome, then verify recovery independently when using real automation.
+
+Continue to xref:07-network-escalation.adoc[follow an intentional escalation].

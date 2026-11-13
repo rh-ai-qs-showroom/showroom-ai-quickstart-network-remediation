@@ -1,33 +1,17 @@
 ---
 type: showroom
-
-# Set the left column width to 30%
 default_width: 30
-# Persist the URL state so browser refresh doesn't reset the UI
 persist_url_state: true
-
 view_switcher:
   enabled: true
   default_mode: split
-
 tabs:
-  # OCP Console
-  # - name: OCP Console
-  #   url: 'https://console-openshift-console.${DOMAIN}'
+  - name: OpenShift Console
+    url: 'https://console-openshift-console.${DOMAIN}'
+  - name: Terminal
+    path: /wetty
+    port: 443
 
-  # Single terminal
-  # - name: Bastion
-  #   path: /wetty
-  #   port: 443
-
-  # Vertical split terminals
-  # - name: Bastion
-  #   path: /wetty
-  #   port: 443
-  #   secondary_name: Bastion
-  #   secondary_path: /wetty
-  #   secondary_port: 443
-
-  # External page
-  - name: Antora
-    url: 'https://antora.org'
+# Provisioning must add Network, RAN, and GitOps tabs using resolved tenant URLs.
+# Do not infer tenant hostnames from the shared cluster domain.
+# Until then, use service details or the application namespace Routes.

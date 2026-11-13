@@ -1,0 +1,99 @@
+= Module 1: Understand the environment
+
+Before accepting a remediation result, identify which service made the decision and which service could change the target.
+This workshop runs two separate workflows with shared supporting services.
+
+== Learning objectives
+
+* Locate the two tenant namespaces on one cluster.
+* Explain the roles of the LLM, predictors, retrieval, and mocks.
+* Distinguish Network escalation from the RAN workflow.
+
+== Exercise 1: Map your seat
+
+. In the OpenShift console, select `{app_namespace}` and open *Workloads → Pods*. Identify the dashboard services, workflow services, and shared dependencies.
+. Find the two predictor workloads, `ran-ml-service` and `ran-rca-ml-service`. They run on CPU in this application namespace, independently of any shared model-serving namespace.
+. Switch to `{edge_namespace}`. Find `edge-nginx`, `edge-fast-path-watcher`, and `edge-fast-path-runner`.
+. On Network, locate *Demo Mode*, *Incident Timeline*, *Integration Status Matrix*, and *NOC Chat*. On RAN, locate *Demo Mode*, *Anomaly List*, and *Recent Anomalies*.
+
+=== Verify
+
+* Both namespaces belong to your seat on the same cluster.
+* You can identify both local predictors and distinguish them from the external LLM endpoint.
+* You can explain why a local predictor does not imply a locally hosted LLM or a dedicated GPU.
+
+== Exercise 2: Trace the architecture
+
+[mermaid]
+....
+flowchart TB
+  learner["Learner: controlled alerts and KPI samples"]
+  maas["External MaaS: real LLM inference"]
+  subgraph cluster["One OpenShift cluster"]
+    subgraph app["Tenant application namespace"]
+      netui["Network dashboard"]
+      ranui["RAN dashboard"]
+      kafka["Kafka: workflow events"]
+      net["Network investigation and decision"]
+      mcp["MCP: Kubernetes, AAP, ServiceNow, Kafka"]
+      ad["Mantis anomaly predictor: CPU"]
+      rca["Mantis root-cause predictor: CPU"]
+      ran["RAN explanation and remediation"]
+      llama["Llama Stack: model and tool access"]
+      pg["PostgreSQL / pgvector: retrieval"]
+      ingest["Document ingestion"]
+      storage["Object storage: bundled documents"]
+      aap["Shared AAP mock"]
+      snow["Network ServiceNow mock"]
+    end
+    subgraph edge["Tenant edge namespace"]
+      nginx["edge-nginx"]
+      watcher["Fast-path watcher"]
+      runner["Fast-path runner: real patches"]
+    end
+  end
+  learner --> netui --> kafka
+  learner --> ranui --> kafka
+  kafka --> net --> mcp
+  mcp -->|observes| nginx
+  mcp --> aap
+  mcp --> snow
+  net --> llama
+  kafka --> ad --> rca --> ran
+  ran --> llama
+  ran --> aap
+  llama --> maas
+  llama --> pg
+  storage --> ingest --> llama
+  watcher -->|observes| nginx
+  watcher --> runner -->|patches| nginx
+....
+
+The diagram shows responsibilities, not every Kafka topic or internal call.
+
+. Trace *Network*: demo alert → Kafka → normalization → Kubernetes investigation through MCP → runbook retrieval → LLM analysis → decision and playbook-match guard → mock AAP execution or mock ServiceNow escalation → audit.
+. Trace *RAN* separately: KPI sample → Kafka → anomaly prediction → root-cause prediction → retrieved documentation and MaaS explanation → mapped automation template → shared mock AAP result.
+. Label controlled inputs and mocks as *simulated*. Label observations, Kafka, retrieval, external inference, and both predictors as *real*.
+. Explain the independent edge runner. It can modify `edge-nginx`; mock AAP does not perform that modification.
+
+=== Verify
+
+* Your Network trace has a ServiceNow escalation branch.
+* Your RAN trace has two predictors and no ServiceNow branch.
+* You can identify which result proves a mock interaction and what evidence would prove a workload changed.
+
+== Scope of this profile
+
+Network and Telco O-RAN are enabled, dashboard authentication uses OpenShift, and bundled documents are ingested automatically.
+Lightspeed, CPU misconfiguration demos, Slack, LokiStack, Langfuse, and Kafka UI are outside this walkthrough.
+There is no ACM hub/spoke configuration.
+Code names such as “hub” and “spoke” do not imply a second cluster here.
+
+== Check your understanding
+
+*Can an AAP job marked successful prove an antenna was repaired?*
+
+No. The mock records a simulated job outcome.
+Real equipment measurements and verification would be needed to establish recovery.
+
+Continue to xref:04-readiness.adoc[Module 2: Check deployment readiness].
