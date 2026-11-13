@@ -1,0 +1,67 @@
+= Module 7: Compare RAN scenarios
+:toc: macro
+:toclevels: 1
+
+You have traced one antenna-failure sample. Compare a second fault with normal traffic to see why detecting an anomaly, naming its cause, and launching automation are separate operations.
+
+*Estimated time:* 10 minutes.
+
+== Learning objectives
+
+* Compare classifier predictions and mapped templates for different fault inputs.
+* Explain why normal traffic should stop before root-cause analysis and remediation.
+* Recognize the limits of evidence from an empty or unchanged anomaly list.
+
+== Exercise 1: Compare a second fault
+
+. In the RAN dashboard, keep *Anomaly List* selected. Preserve your antenna-failure evidence from xref:08-ran-workflow.adoc[Module 6].
+. Under *Demo Mode*, click *High Network Congestion (Gradual Buildup)* once. Record the new incident ID, Kafka topic, and offset.
+. Find that incident under *Recent Anomalies*. Record *Anomaly detection confidence*, *Mantis RCA*, and *RCA confidence*. The intended classification is `High Network Congestion (Gradual Buildup)`; the observed model output is your evidence.
+. Compare *LLM Explanation* and *Recommended Fix* with the antenna-failure card. Identify how the explanation describes the predicted fault. Note any cited documentation section and whether it supports the recommendation.
+. Record *Job*, *Job outcome*, *Job ID*, and *Job result*. A classification of `High Network Congestion (Gradual Buildup)` maps to `ran-load-balance`. If the model predicts another category, record its selected template and inspect the difference with the facilitator.
+. Fill in the first two rows of the comparison below using actual values.
+
+[cols="1,1,1,1,1,1",options="header"]
+|===
+|Scenario |Incident ID |AD confidence |RCA category and confidence |Template |Mock job outcome
+|Antenna Failure |Your value |Your value |Your value |Your value |Your value
+|Gradual congestion |Your value |Your value |Your value |Your value |Your value
+|Normal traffic |Your value |Not shown if no anomaly |Not invoked if normal |None expected |None expected
+|===
+
+=== Verify
+
+* Each fault row is tied to its own incident ID.
+* You compare detection confidence with detection confidence, and RCA confidence with RCA confidence. The dashboard formats them differently, so preserve their labels and units.
+* Your explanation separates the classifier's category, the LLM's prose, and the mapped automation job.
+
+The confidence values describe model outputs for their respective prediction tasks. A larger value does not establish that equipment was repaired. Text can also vary across MaaS calls; identical wording is not a completion criterion.
+
+== Exercise 2: Observe normal traffic
+
+. Check that the preceding fault completed and that required dependencies remain healthy. This provides a positive control before testing an input that should produce no anomaly.
+. Record the incident IDs currently visible in *Recent Anomalies*. Leave existing records in place so you retain the comparison evidence.
+. Click *Normal Traffic (No Anomaly)* once. Record its new incident ID, topic, and offset in the comparison table.
+. Allow processing and dashboard refreshes, then look specifically for that new ID. The intended result is no matching anomaly card, RCA explanation, or automation job. Older fault cards remain visible.
+. Recheck dependency warnings. If a required service is unavailable or you cannot establish that processing is continuing, mark the observation inconclusive and ask the facilitator to investigate.
+
+=== Verify
+
+* You have evidence that the normal sample was published to Kafka.
+* You distinguish the absence of a new card from the continued presence of older incidents.
+* You record the observation and its limits instead of claiming a repair or inventing a normal confidence score.
+
+[NOTE]
+====
+The detector publishes an anomaly only when its predictor returns `anomalous`. A normal result stops at detection, so the dashboard has no normal-result card or per-sample confidence display. Publication acknowledgment and an unchanged list alone do not prove that a sample reached the predictor. Healthy dependencies and the preceding positive control support your interpretation; further verification requires facilitator investigation.
+====
+
+== Troubleshooting and reflection
+
+Do not ask RAN Chat to confirm a normal incident by ID: chat uses buffered anomalies and can fall back to the latest anomaly when an ID is absent. Always verify the ID in any answer. The *Clear* button clears dashboard service buffers; it does not reset the pipeline, remove Kafka history, or prove normal detection.
+
+*Question:* Why should normal traffic avoid the antenna-failure automation flow?
+
+*Expected answer:* A normal detection result emits no anomaly event, so downstream classification, explanation, and mapped remediation are not invoked. RAN does not use Network's ServiceNow escalation path.
+
+Continue to xref:10-integrations-cleanup.adoc[Module 8: Connect the demo to real users].

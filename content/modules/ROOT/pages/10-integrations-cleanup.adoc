@@ -1,0 +1,81 @@
+= Module 8: Connect the demo to real users
+
+Identify what an operations team needs to connect these patterns to real systems, and review who owns the tenant lifecycle.
+
+== Learning objectives
+
+* Map simulated integrations to real counterparts.
+* Describe evidence needed to establish actual recovery.
+* Explain Argo CD ownership and cleanup order.
+
+== Exercise 1: Design an operational handoff
+
+. Choose one recorded Network incident and one RAN incident. Summarize observations, model decisions, retrieved evidence, and mock results.
+. For each simulated boundary, describe the real source or destination and how you would verify the outcome.
+. Identify the human responder and approval boundary for automated changes. Keep Network ticket escalation separate from RAN classification and remediation.
+
+[cols="1,2,2",options="header"]
+|===
+|Demo boundary |Real integration |Evidence to add
+|Network alert input
+|Monitoring events with supported schema, target identity, and Kafka ingestion
+|Source event, correlation, and observations from the actual target
+|RAN KPI sample
+|Equipment telemetry with required features and time window
+|Data quality, model suitability, and post-change KPIs
+|Shared AAP mock
+|AAP inventory, credentials, tested job templates, and scoped permissions
+|Job output and independent workload/device recovery checks
+|Network ServiceNow mock
+|Instance, incident mapping, authentication, and ownership
+|Persisted ticket, assigned responder, and lifecycle updates
+|Bundled documents
+|Maintained runbooks and vendor documentation
+|Provenance, version, retrieval quality, and update process
+|===
+
+MaaS and both predictors already run real inference in this lab.
+Operational work includes validating their behavior with representative data.
+An LLM explanation is not an independent equipment measurement.
+
+=== Verify
+
+* Your handoff includes incident and mock job or ticket IDs.
+* You propose a recovery check beyond “mock job successful.”
+* You attribute real edge fast-path changes separately.
+
+== Exercise 2: Review deployment and cleanup ownership
+
+[IMPORTANT]
+====
+Installation, reset, and cleanup are pending fresh-environment validation against tenant GitOps packaging.
+This exercise reviews the lifecycle.
+Use the facilitator's validated environment procedure when it becomes available.
+====
+
+. In GitOps, review the four tenant applications if access is available. Bootstrap Helm creates Argo CD Applications; Argo CD renders application charts and owns their resources. Bootstrap install completion alone does not prove readiness.
+. Review `-hub` and `-edge` destinations. They must resolve to your two namespaces on the same cluster; `-predictors` must also target your application namespace.
+. Discuss cleanup order: remove the tenant application bootstrap release, wait for Argo CD cascading deletion of all four applications and their resources, remove the tenant platform/AppProject, then remove tenant namespace infrastructure.
+. Identify data lost at the final step: both namespaces, remaining persistent volume claims, retained secrets, and injected tenant credentials. Provision a fresh seat for a complete reset.
+. Confirm that shared operators, the GitOps controller, and other tenants remain platform-owned.
+
+The current package disables automatic self-healing and pruning by default for demonstrations.
+Selected edge workload changes are excluded from reconciliation.
+A sync does not necessarily reset incident history, reverse edge changes, or recreate a clean seat.
+RAN's *Clear* removes displayed anomaly history; it is not a deployment reset.
+*Reset Lightspeed Demo* is outside this profile.
+
+=== Verify
+
+* You can explain why the controller and AppProject must remain until cascading deletion finishes.
+* You distinguish clearing a view, reconciling Git, and deleting a seat.
+* You have saved evidence notes before facilitator-managed teardown.
+
+== Check your understanding
+
+*Which conclusion is supported by this lab?*
+
+You can demonstrate event processing, real inference and retrieval, decision handling, and simulated integration results.
+Actual recovery requires a real action and independent observations of the affected workload or equipment.
+
+For implementation details, see the link:https://github.com/rh-ai-quickstart/ai-driven-network-remediation[AI-Driven Network Remediation quickstart^].

@@ -1,19 +1,17 @@
-* xref:index.adoc[What is Showroom?]
+* xref:index.adoc[Start here]
+* xref:01-overview.adoc[Workshop overview]
+* xref:02-details.adoc[Access and lab details]
 
-.Content Developer Guide
-* xref:quick-start.adoc[Quick Start]
-* xref:content-repo.adoc[Creating a Content Repository]
-* xref:agnosticv-config.adoc[AgnosticV Configuration]
-* xref:ui-config.adoc[UI Configuration]
-* xref:user-data.adoc[User Data and Variables]
-* xref:attribute-example.adoc[Attribute Injection Example]
-* xref:ocp4-role-reference.adoc[OCP4 Role Reference]
-* xref:vm-role-reference.adoc[VM Role Reference]
+.Network investigation and remediation
+* xref:03-environment.adoc[1. Understand the environment]
+* xref:04-readiness.adoc[2. Check deployment readiness]
+* xref:05-network-crashloop.adoc[3. Run the Network happy path]
+* xref:06-network-oom.adoc[4. Compare another remediation]
+* xref:07-network-escalation.adoc[5. Follow an escalation]
 
-.Showroom Developer Guide
-* xref:architecture.adoc[Architecture]
-* xref:deployer.adoc[Showroom Deployer]
-* xref:images.adoc[Showroom Images]
-* xref:nookbag.adoc[Nookbag UI]
-* xref:ocp-integration.adoc[OCP Integration]
-* xref:contributing.adoc[Contributing]
+.RAN detection and root-cause analysis
+* xref:08-ran-workflow.adoc[6. Run the RAN workflow]
+* xref:09-ran-scenarios.adoc[7. Explore RAN scenarios]
+
+.Operational handoff
+* xref:10-integrations-cleanup.adoc[8. Connect the demo to real users]

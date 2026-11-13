@@ -1,0 +1,73 @@
+= Module 2: Check deployment readiness
+
+Establish a healthy baseline before injecting an incident so you can distinguish unavailable dependencies from intentional escalation.
+
+== Learning objectives
+
+* Check services, both CPU predictors, and automatic document ingestion.
+* Recognize the limits of health indicators.
+* Capture useful evidence for unavailable dependencies.
+
+== Exercise 1: Check the application baseline
+
+. If GitOps access is supplied, open *Applications* and find your tenant's `-access`, `-predictors`, `-hub`, and `-edge` applications. Confirm all four are *Synced* and *Healthy*. Otherwise ask the facilitator to confirm.
+. Select `{app_namespace}` in OpenShift and inspect *Workloads → Pods*. Confirm required containers are ready, including dashboard OAuth sidecars. A pod in `Running` with a missing ready container is not sufficient.
+. Identify the Network agent, RAN anomaly detector, RAN root-cause and remediation services, Kafka, Llama Stack, PostgreSQL/pgvector, object storage, ingestion, the AAP mock, the ServiceNow mock, and the four Network MCP servers.
+. Open Network's *Integration Status Matrix*. Record unavailable dependencies and HTTP status where shown. Ask *NOC Chat*: `MCP health status across all integrations`. Compare its summary with resource readiness.
+. Open RAN and check dependency warnings before running a scenario.
+
+=== Verify
+
+* Required services are ready or the facilitator has resolved the failing dependency.
+* Both authenticated dashboards and their backing services respond.
+* You have recorded a baseline timestamp and expected disabled integration warnings.
+
+[NOTE]
+====
+LokiStack and its MCP integration are disabled.
+Network can report `Partial data` with `probes` unavailable when checking that disabled dependency.
+That warning alone does not demonstrate a remediation failure.
+Identify the named dependency instead of treating every red status as an incident outcome or ignoring every warning.
+====
+
+== Exercise 2: Check both predictors
+
+. In your application project, use console resource search to find *InferenceServices* (`serving.kserve.io/v1beta1`). Open `ran-ml-service` and `ran-rca-ml-service`.
+. Inspect each resource's status conditions and confirm `Ready` is `True`. If your console exposes model readiness under OpenShift AI instead, use that view or ask the facilitator to confirm.
+. Inspect backing pods and logs. Confirm model initialization completed without checkpoint download, image-pull, or loading errors. Both workloads must belong to `{app_namespace}`.
+. Review resource requests in pod or InferenceService YAML. Both predictors use CPU and memory without a GPU allocation.
+
+=== Verify
+
+* Both InferenceServices are ready in the tenant application namespace.
+* Their endpoints do not depend on a shared model-serving namespace.
+* You understand that process health alone does not prove a model loaded or that MaaS inference works.
+
+== Exercise 3: Confirm ingestion finished
+
+. In *Workloads → Pods*, find the pod with component `ingestion-pipeline` and open *Logs*.
+. Find `Runbook ingest complete` for `noc_runbooks` and `Telco doc ingest complete` for `telco_oran_docs`. Each should report a positive ingested count and `failed=0`. These logs confirm file attachment submissions, not completed indexing. Counts depend on the packaged document set.
+. If logs show only startup or progress, wait for completion. For skipped ingestion, exceptions, or failed documents, capture evidence for the facilitator. Do not re-ingest or delete stores to hide an error.
+. Ask the facilitator to verify both stores through Llama Stack's vector-store and file APIs: positive completed file counts, all expected files in terminal `completed` status, no failed or in-progress files, and a retrieval query returning relevant content from each corpus. This check uses operator access; the dashboards do not expose an ingestion-completion screen.
+. Record both collection names and the facilitator's indexing and retrieval confirmation. Compare later retrieved evidence with these corpora.
+
+Ingestion runs in a background thread.
+Its `/health` response, pod readiness, and ingestion-completion log messages do not prove indexing completed.
+Do not proceed until the facilitator confirms file readiness and retrieval for both stores, including when logs are unavailable after a restart.
+
+=== Verify
+
+* Network runbooks and RAN documentation both completed ingestion.
+* You can explain why `Running` is insufficient evidence for retrieval readiness.
+
+== Troubleshooting and handoff
+
+For an unavailable required dependency, record namespace, resource, timestamp, error, and last healthy stage.
+Ask the facilitator to restore readiness.
+A MaaS credential or connectivity error is a dependency issue, rather than proof of an intended escalation.
+Do not paste credentials into notes or chat.
+
+*What does a green application state prove?* It establishes a useful baseline.
+Scenario runs verify the complete inference and event path.
+
+Continue to xref:05-network-crashloop.adoc[Module 3: Run the Network happy path].

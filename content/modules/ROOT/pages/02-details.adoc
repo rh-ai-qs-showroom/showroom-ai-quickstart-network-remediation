@@ -1,0 +1,58 @@
+= Access and lab details
+
+Use the assigned seat details from the demo platform or your facilitator.
+Provisioning populates the values below when runtime wiring is available.
+
+[cols="1,2",options="header"]
+|===
+|Setting |Assigned value
+|Application namespace |`{app_namespace}`
+|Edge namespace |`{edge_namespace}`
+|Login |OpenShift identity and password from your service details
+|===
+
+[NOTE]
+====
+If the table still shows `TENANT_APPLICATION_NAMESPACE` or `TENANT_EDGE_NAMESPACE`, use your service details and tell the facilitator that runtime attributes have not been populated.
+Do not use another learner's namespace.
+====
+
+ifdef::openshift_console_url[]
+Open the link:{openshift_console_url}[OpenShift console^].
+endif::[]
+ifdef::network_dashboard_url[]
+Open the link:{network_dashboard_url}[Network dashboard^].
+endif::[]
+ifdef::ran_dashboard_url[]
+Open the link:{ran_dashboard_url}[RAN dashboard^].
+endif::[]
+ifdef::gitops_url[]
+Open the link:{gitops_url}[GitOps console^] if your identity has access.
+endif::[]
+
+== Exercise: Sign in and locate the dashboards
+
+. Open *OpenShift Console* in the Showroom right pane, or use the console link in your service details.
+. Sign in with your assigned OpenShift identity.
+. Select your application project. If the console reports restricted access while showing *All Projects*, select your assigned project and retry.
+. In the Administrator perspective, open *Networking → Routes*. Locate `hub-frontend` for Network and `hub-ran-frontend` for RAN, and open each route's location in a separate browser tab.
+. Complete OpenShift authentication for both dashboards. Use the provided route links if your console perspective names menus differently.
+. Keep the console available for scoped pod logs and readiness checks. The *Terminal* tab requires a provisioned terminal service; browser exercises use the OpenShift console.
+
+The dashboards include *Network* and *Telco ORAN* navigation.
+If a link points to an unavailable hostname, use your assigned route rather than constructing a URL from a sample domain.
+
+=== Verify
+
+* Both authenticated dashboards load for your assigned seat.
+* You can select the assigned application and edge projects.
+* You can open *Workloads → Pods*, select a pod, and view its *Logs*.
+* You know that the current learner role is read-only. The mock-ticket lookup in Module 5 requires an authorized facilitator to use a pod terminal and share the resulting ticket fields.
+
+=== Troubleshooting
+
+An authentication loop, forbidden response in your own project, or inaccessible route is an access/deployment issue.
+Capture the URL, namespace, and error for the facilitator before triggering incidents.
+Opening a dashboard does not demonstrate that its AI dependencies are ready.
+
+Continue to xref:03-environment.adoc[Module 1: Understand the environment].

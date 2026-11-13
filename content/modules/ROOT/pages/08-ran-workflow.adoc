@@ -1,0 +1,81 @@
+= Module 6: Follow the RAN workflow
+:toc: macro
+:toclevels: 1
+
+An operator investigating a radio fault needs to distinguish an unusual signal from a diagnosis and an action. In this module, follow one KPI sample through those three decisions.
+
+*Estimated time:* 15 minutes.
+
+== Learning objectives
+
+* Trace a RAN incident through Kafka, two predictors, retrieval, explanation, and automation.
+* Distinguish anomaly detection confidence from root-cause classification confidence.
+* Identify which evidence demonstrates model inference and which demonstrates mocked automation.
+
+== How this workflow differs
+
+The RAN workflow is separate from the Network incident workflow:
+
+[source,text]
+----
+Demo KPI window → Kafka → anomaly predictor → root-cause predictor
+→ document retrieval and MaaS explanation → category-to-template mapping
+→ mock AAP job → remediation result
+----
+
+Both Mantis predictors run on CPU in your tenant application namespace. The anomaly predictor answers whether a window is anomalous. The root-cause predictor assigns a fault category. Each sample contains 128 timesteps across 18 KPI channels.
+
+Retrieval supplies documentation from `telco_oran_docs`. The external MaaS LLM explains the predicted fault and recommends a fix. The remediation service maps the classifier's category to an AAP template; the LLM does not select the category or job. This path does not create Network ServiceNow escalation tickets.
+
+== Exercise 1: Inject and identify a sample
+
+. Open the RAN dashboard using your assigned URL, and authenticate with OpenShift if prompted. Select *Anomaly List* if the grid view is open.
+. Review dependency warnings. Resolve required dependency failures using xref:04-readiness.adoc[deployment readiness] before interpreting a missing result.
+. Under *Demo Mode*, click *Antenna Failure* once.
+. Record the returned *Incident*, scenario, *Topic*, and *Offset*. These identify the injected sample and its Kafka publication. They do not yet demonstrate successful detection or remediation.
+. Wait for the dashboard to refresh. Find that exact incident ID under *Recent Anomalies*. Processing is asynchronous; the trigger's timing hint is not a completion guarantee.
+
+=== Verify
+
+* The trigger returns an incident ID and Kafka topic/offset without a publication error.
+* Your notes identify the matching incident, rather than a row from a previous run.
+
+== Exercise 2: Read the model and automation evidence
+
+. On the matching card, record *Anomaly detection confidence*, *Mantis RCA*, and *RCA confidence*. The intended classification is `Antenna Failure`; record the actual prediction if it differs.
+. Read *LLM Explanation* and *Recommended Fix*. Note one KPI or documentation reference used to explain the fault. If no reference is present, record that limitation instead of supplying one yourself.
+. Inspect *Job*, *Job outcome*, *Job ID*, and *Job result* as they appear. For an `Antenna Failure` classification, the mapping selects `ran-cell-recovery`.
+. In *RAN Chat*, enter `Explain incident YOUR-INCIDENT-ID and its recommended fix`, replacing the placeholder with your ID. Check that the response refers to your incident. Compare its explanation with the card, and record the model source displayed beneath the chat.
+. Complete an evidence record:
++
+[cols="1,2",options="header"]
+|===
+|Evidence |Record from your run
+|Correlation |Incident ID, zone, application, Kafka topic and offset
+|Detection |Anomaly detection confidence
+|Classification |Mantis RCA category and RCA confidence
+|Explanation |KPI/document reference, or its absence; chat model source
+|Automation |Template, job ID, terminal job outcome and result summary
+|===
+
+=== Verify
+
+* You can distinguish the two predictor outputs from the LLM explanation.
+* The selected template agrees with the actual classifier category.
+* A successful run shows a terminal mock job outcome and the *Remediated* badge. If it fails, record the displayed stage and reason.
+
+[IMPORTANT]
+====
+*Real:* Kafka delivery, CPU predictor inference, document retrieval, and MaaS inference.
+*Simulated:* the demo KPI input and AAP execution. A *Remediated* badge means the mock job completed successfully. It does not prove a radio was repaired. Neither confidence score measures the probability that a repair succeeded.
+====
+
+== Troubleshooting and reflection
+
+If the card reports `rca_classification`, inspect the predictor dependency. If an explanation is unavailable, record the displayed error; a valid classifier result can still proceed to mapped automation even when the LLM explanation fails. A failed job is a separate automation outcome. Return to readiness checks when dependencies are unavailable, and preserve the incident ID for the facilitator.
+
+*Question:* Which component chooses `ran-cell-recovery`?
+
+*Expected answer:* The remediation service maps the Mantis RCA category `Antenna Failure` to that template. The LLM supplies an explanation and recommendation.
+
+Continue to xref:09-ran-scenarios.adoc[Module 7: Compare fault and normal scenarios].

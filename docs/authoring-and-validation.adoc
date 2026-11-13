@@ -1,0 +1,139 @@
+= Authoring and publication validation
+
+== Scope and assumptions
+
+This is a draft learner workshop, approximately 90 minutes, for intermediate SRE, platform, and network engineers.
+The learner starts with a provisioned tenant.
+Only this Showroom repository is changed.
+
+The source quickstart was inspected read-only at `94546a9a92667ea5d62e42857f9047bdb22caed4`, together with local uncommitted changes present during authoring, including tenant packaging.
+That commit alone does not reproduce the packaging reviewed.
+Before publication, replace this reference with the published immutable revision used by RHDP, and recheck behavior against it.
+
+The invoked `showroom:create-lab` skill supplied the generation/review workflow and local AsciiDoc rules.
+Its referenced common-rules and specialized file-generator/module-reviewer definitions were not available in this checkout; available references and independent generation/review agents were used.
+
+== Deployment profile contract
+
+[cols="1,3",options="header"]
+|===
+|Setting |Agreed profile
+|Topology |One OpenShift cluster; no ACM hub/spoke setup
+|Workflows |Network and Telco O-RAN enabled
+|Namespaces |Tenant application namespace and separate tenant edge namespace
+|AAP |One shared mock for Network and RAN
+|ServiceNow |Network-only mock
+|Lightspeed |Disabled; no mock
+|LLM |Real external MaaS inference through Llama Stack
+|RAN models |Real anomaly and RCA Mantis predictors on CPU in the application namespace
+|Authentication |OpenShift authentication on both dashboards
+|Documents |Bundled Network and RAN documents ingested automatically
+|Optional integrations |Slack, LokiStack, Langfuse, Kafka UI disabled
+|Other demos |CPU misconfiguration excluded
+|Dedicated GPU |Not required
+|===
+
+Shared dependencies include Kafka, Llama Stack, PostgreSQL/pgvector, object storage, and ingestion.
+The independent edge watcher/runner can modify nginx; successful mock AAP jobs must never be presented as proof of that change.
+RAN does not use the Network ServiceNow path.
+
+== Proposed runtime contract
+
+These are proposed Showroom attribute names, not a claim that the RHDP adapter already emits them.
+Map the adapter's actual user data to these keys or update the pages when that contract is finalized.
+
+[cols="1,2,2",options="header"]
+|===
+|Attribute |Purpose |Draft behavior
+|app_namespace |Assigned tenant application namespace |Visible `TENANT_APPLICATION_NAMESPACE` placeholder
+|edge_namespace |Assigned tenant edge namespace |Visible `TENANT_EDGE_NAMESPACE` placeholder
+|openshift_console_url |Assigned console URL |Optional rendered link; console tab uses shared ingress domain
+|network_dashboard_url |Authenticated Network route URL |Optional rendered link; otherwise locate `hub-frontend` in Routes
+|ran_dashboard_url |Authenticated RAN route URL |Optional rendered link; otherwise locate `hub-ran-frontend` in Routes
+|gitops_url |GitOps UI URL, if learner access exists |Optional rendered link; facilitator confirms health otherwise
+|===
+
+The current learner binding uses ClusterRole `view` in both namespaces and does not grant `pods/exec`.
+Pod-terminal ticket reads and internal vector-store indexing checks require an authorized facilitator.
+Do not broaden learner privileges to make the draft exercises work.
+
+Credentials come from private service details.
+Do not commit tenant credentials or MaaS keys.
+The proposed keys must be supplied as tenant-specific runtime attributes by the Showroom provisioning integration.
+
+`ui-config.yml` enables split view with an OpenShift Console tab and Terminal tab.
+Provisioning must provide the terminal and console embedding support.
+Add or override Network, RAN, and GitOps tabs using fully resolved tenant URLs in the provisioning configuration.
+Do not assume that arbitrary AsciiDoc attributes are expanded inside `ui-config.yml`, or that ${DOMAIN} identifies the tenant.
+Validate OAuth in embedded and separate tabs; fall back to separate tabs if framing is blocked.
+
+== Source evidence map
+
+Paths below are relative to the quickstart repository.
+
+[cols="1,3",options="header"]
+|===
+|Content |Implementation consulted
+|Profile and lifecycle
+|`tenant/README.md`, `tenant/Makefile`, `tenant/bootstrap/files/hub-values.yaml`, `tenant/bootstrap/templates/applications.yaml`, `tenant/predictors/templates/inferenceservices.yaml`
+|Network controls and visible artifacts
+|`hub/frontend/src/components/DemoTrigger.jsx`, `IncidentTimeline.jsx`, `ChatPanel.jsx`; `hub/chatbot-service/src/chatbot_service/{kafka,slo,chat}.py`
+|Network decisions and audit
+|`hub/agent-service/src/agent_service/graph.py`, `fast_path.py`, and nodes `decide`, `match_guard`, `remediate`, `escalate`, `audit`
+|Mock ticket lookup
+|`hub/infra/servicenow-mock/main.py`, `Containerfile`, and `hub/helm/charts/network/templates/servicenow-mock.yaml`
+|RAN controls and visible artifacts
+|`hub/ran-frontend/src/components/DemoTrigger.jsx`, `AnomalyTable.jsx`, `ChatPanel.jsx`
+|RAN processing
+|`hub/ran-anomaly-detector/src/ran_anomaly_detector/detection.py`; `hub/ran-rca-service/src/ran_rca_service/nodes/{analyze,rag_retrieval}.py`; `hub/ran-remediation-service/src/ran_remediation_service/nodes/decide.py`
+|Predictors
+|`model-serving/shared-ml-predictor/src/ran_ml_service/model.py`
+|Ingestion readiness
+|`hub/ingestion-pipeline/src/ingestion_pipeline/{app,service}.py`, `hub/helm/templates/ingestion-pipeline.yaml`
+|Independent real actuation
+|`docs/edge-fast-path-healer.md`, `edge/helm/templates/fast-path-healer-runner.yaml`
+|===
+
+Network timeline cards summarize completed audits; they do not expose a live per-node trace.
+Detailed logs depend on deployed log level.
+Network chat does not receive the complete per-incident investigation.
+Normal RAN results are dropped before anomaly publication, so absence of a card is not proof of completed prediction.
+RAN chat may fall back to the latest anomaly for an unknown ID.
+These limitations are included in the learner exercises.
+
+== Publication checks still required
+
+* [ ] Publish and pin the tenant packaging revision and accessible predictor image.
+* [ ] Provision a fresh tenant using the packaging's infrastructure, platform, secret injection, and tenant bootstrap order.
+* [ ] Confirm four Argo Applications become Synced/Healthy; verify both namespaces and namespace-local CPU predictors without shared model-serving dependencies.
+* [ ] Verify real MaaS connectivity with the configured model and both real predictors with sample data.
+* [ ] Verify both authenticated routes with an assigned learner identity, scoped read-only console/log access, facilitator pod-terminal access, and GitOps health visibility or facilitator fallback.
+* [ ] Wire and verify the proposed runtime attributes and resolved tabs, including OpenShift OAuth embedding behavior.
+* [ ] Check page layout, tables, and browser-rendered Mermaid architecture in the deployed Showroom theme.
+* [ ] Confirm automatic ingestion, all expected files indexed with terminal completed status/positive completed counts, no failed/in-progress files, and relevant retrieval from both `noc_runbooks` and `telco_oran_docs`. Completion logs alone are insufficient.
+* [ ] Run CrashLoop, OOM, and escalation from the learner seat. Capture IDs, available logs, guards, mock job results, and the matching ticket lookup.
+* [ ] Verify the ticket lookup uses only assigned-namespace access and never prints credentials.
+* [ ] Verify OOM outcomes with and without a recent real edge heal; attribute any workload mutations correctly.
+* [ ] Run antenna failure and gradual congestion, checking prediction categories, separate confidence values, retrieved explanation, mapped templates, and mock job results.
+* [ ] Run normal traffic with a positive control and establish predictor processing through operator evidence; retain the UI observability caveat.
+* [ ] Validate reset/re-provision behavior, including in-memory mock records and dashboard buffers.
+* [ ] Validate cascading deletion completes before AppProject and namespace removal; verify tenant data cleanup and other tenants/shared services remain intact.
+* [ ] Replace draft notices with the tested install/cleanup procedure and final runtime contract only after these checks pass.
+
+The current package exposes candidate lifecycle targets in `tenant/Makefile`.
+This draft deliberately does not publish them as validated learner commands.
+
+== Local validation
+
+Local validation on 2026-11-12:
+
+* Antora generated the site with warnings treated as failures: passed without warnings.
+* All 11 active pages and 12 generated HTML files, including the root redirect, passed local cross-reference, link/fragment, and unresolved runtime-attribute checks.
+* A second build with sample runtime attributes confirmed tenant namespace substitution and all four conditional access links opening in new tabs.
+* The embedded ticket-lookup Python compiled successfully; the API, credentials environment, and Python container availability match the source.
+* Independent source review found no remaining Critical or High issues after correcting learner permissions and indexing readiness. List-continuation corrections were checked in generated HTML.
+* Whitespace validation passed with `git diff --check`.
+
+These checks establish documentation consistency and HTML generation, not live deployment correctness.
+Browser visual inspection could not run because the browser access host was unavailable.
+The Mermaid diagram still requires browser verification with its externally loaded library and the deployed theme.

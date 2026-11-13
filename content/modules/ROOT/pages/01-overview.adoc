@@ -1,0 +1,49 @@
+= Workshop overview
+
+You are an engineer in a network operations team.
+An alert alone does not tell you whether automation is appropriate: you need observations, relevant operating procedures, a defensible decision, and a record of what happened.
+Practice that reasoning with controlled incident inputs.
+
+== Learning outcomes
+
+By the end of the workshop, you can:
+
+* Trace a Network incident through Kubernetes investigation with the Model Context Protocol (MCP), retrieval-augmented generation (RAG), guarded playbook selection, and audit.
+* Compare automated remediation with intentional human escalation.
+* Separate RAN anomaly detection, root-cause classification, and an LLM-generated explanation.
+* Identify real evidence, simulated actions, and the limits of a successful mock result.
+
+== Audience and prerequisites
+
+This lab is intended for site reliability engineers, platform engineers, and network engineers with basic Kubernetes knowledge.
+You should recognize pods, deployments, namespaces, and logs.
+Model training, GPUs, and cluster administration are not required.
+
+Your facilitator supplies a tenant seat with both dashboards, OpenShift credentials, an application namespace, and a separate edge namespace on the same cluster.
+The inference endpoint is already configured; you do not need to enter a MaaS API key.
+
+== Workshop route
+
+[cols="1,3,1",options="header"]
+|===
+|Module |Activity |Estimate
+|1 |Open both dashboards and map the architecture |10 min
+|2 |Check services, predictors, and document ingestion |10 min
+|3 |Follow the Network CrashLoop incident |15 min
+|4 |Compare the Network OOM decision |10 min
+|5 |Inspect a Network escalation and mock ticket |10 min
+|6 |Trace RAN antenna-failure detection and diagnosis |15 min
+|7 |Compare another RAN fault and normal traffic |10 min
+|8 |Plan real integrations and review cleanup ownership |10 min
+|===
+
+== Keep an evidence notebook
+
+For each run, record the scenario, incident ID, timestamp, target or zone, model result, action or escalation, and job or ticket identifier.
+Label what the UI shows and what you confirmed in logs.
+If evidence is unavailable, record that instead of filling the gap with a generated answer.
+
+LLM wording and decisions can vary between runs.
+Compare the evidence and recorded outcome instead of expecting identical prose.
+
+Continue to xref:02-details.adoc[access and lab details].
