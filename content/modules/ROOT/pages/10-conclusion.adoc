@@ -1,0 +1,25 @@
+= Conclusion
+
+You followed two AI-assisted operations workflows from an incident or KPI sample through diagnosis and automation.
+
+== What you learned
+
+* Investigated Network incidents using Kubernetes observations, the Model Context Protocol (MCP), and retrieval-augmented generation (RAG).
+* Compared existing Ansible Automation Platform (AAP) templates for restart and resource-exhaustion responses.
+* Followed Red Hat Ansible Lightspeed playbook generation, validation, and execution through AAP when a suitable existing playbook was unavailable.
+* Inspected an intentional escalation and its mock ServiceNow ticket.
+* Compared RAN anomaly detection and root-cause classification with an LLM-generated explanation.
+* Followed mapped RAN automation jobs and checked the resulting simulator state.
+
+== Key takeaways
+
+Network combines observations, retrieved runbooks, and model analysis to select a response or escalate for human investigation.
+Lightspeed can generate a new playbook for a supported action; AAP executes the automation.
+
+RAN separates anomaly detection, root-cause prediction, explanation, and category-to-template mapping.
+Its AAP jobs act on the lab simulator, while Network jobs target the example Kubernetes workload.
+Checking the target after a job completes connects the automation result to the change it made.
+
+== Reference
+
+Explore the link:https://github.com/rh-ai-quickstart/ai-driven-network-remediation[AI-Driven Network Remediation quickstart^] for the implementation behind these workflows.

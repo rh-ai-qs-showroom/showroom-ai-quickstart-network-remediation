@@ -12,6 +12,6 @@ tabs:
     path: /wetty
     port: 443
 
-# Provisioning must add Network, RAN, and GitOps tabs using resolved tenant URLs.
+# Provisioning can add Network, RAN, and AAP tabs using resolved access URLs.
 # Do not infer tenant hostnames from the shared cluster domain.
 # Until then, use service details or the application namespace Routes.

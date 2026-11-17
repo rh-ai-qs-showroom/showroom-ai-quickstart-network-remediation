@@ -2,7 +2,7 @@
 :toc: macro
 :toclevels: 1
 
-You are the on-call engineer reviewing a proposed response to a stalled nginx worker. Follow one incident from its demo alert to its audit record. The intended happy path selects an existing restart playbook and completes a mock automation job.
+You are the on-call engineer reviewing a proposed response to a stalled nginx worker. Follow one incident from its demo alert to an Ansible Automation Platform (AAP) job. The intended happy path selects an existing restart playbook and restarts the lab's nginx deployment.
 
 Estimated time: 15 minutes.
 
@@ -11,6 +11,32 @@ Estimated time: 15 minutes.
 * Correlate a demo alert, workflow execution, and dashboard outcome.
 * Explain how Kubernetes observations and retrieved runbooks inform LLM analysis.
 * Distinguish a guarded automation decision from proof of workload recovery.
+
+== Network workflow
+
+Confidence and playbook-match checks guide the response decision:
+
+[mermaid,width=100%]
+....
+flowchart TB
+  alert["Workload alert"] --> kafka["Kafka"]
+  kafka --> investigate["Investigate Kubernetes<br/>through MCP tools"]
+  investigate --> retrieval["Retrieve relevant runbooks"]
+  retrieval --> diagnosis["LLM diagnosis"]
+  diagnosis --> decision{"Response decision"}
+  decision -->|Matching playbook| job["Run AAP job"]
+  decision -->|New corrective action| generate["Lightspeed generation,<br/>validation and publication"]
+  generate -->|Ready to execute| job
+  decision -->|Human investigation needed| escalate["ServiceNow escalation"]
+  generate -->|Failure| escalate
+  job -->|Failure| escalate
+  job -->|Success| audit["Record outcome in Kafka"]
+  escalate --> audit
+  audit --> dashboard["Show outcome in<br/>Network dashboard"]
+....
+
+Generated playbooks are stored in Gitea and synchronized with the AAP project before execution.
+ServiceNow tickets use the lab's mock integration.
 
 == Exercise 1: Trigger and identify an incident
 
@@ -30,9 +56,9 @@ The timeline summarizes completed audit records. It does not display every graph
 * A matching incident card appears, or you have recorded that it is still missing and investigated the dependency health.
 * You have captured the actual outcome, including any escalation.
 
-== Exercise 2: Explain the decision path
+== Exercise 2: Follow the decision and restart
 
-. Open the *OpenShift Console*. In the application namespace identified in your lab details, open *Workloads → Pods*, select the `agent-service` pod, and open *Logs*. Keep other learners' namespaces outside your investigation.
+. Open the *OpenShift Console*. In the application namespace identified in your lab details, open *Workloads → Pods*, select the `agent-service` pod, and open *Logs*.
 . Find the workflow invocation with the topic and offset you recorded. Locate the completion message containing your incident ID. Within that interval, inspect available entries for normalization, investigation, RAG retrieval, analysis, the decision, and the playbook guard. Log detail depends on the deployed log level; record missing details as unavailable.
 . Use this sequence to explain the roles of the components:
 +
@@ -43,26 +69,21 @@ The timeline summarizes completed audit records. It does not display every graph
 |Runbook retrieval |Search the ingested knowledge base for relevant operational guidance.
 |LLM analysis |Combine the alert, available observations, and retrieved context into a root-cause assessment and recommendations.
 |Decision and guard |Check confidence and whether the candidate playbook fits the assessed cause. The expected CrashLoop candidate is `restart-nginx`; a guard error causes escalation.
-|Action and audit |Launch and poll the mock AAP job, or create a mock ServiceNow escalation, then publish the incident outcome to Kafka.
+|Action and audit |Launch and poll the AAP job, or create a mock ServiceNow escalation, then publish the incident outcome to Kafka.
 |===
 
 . Return to the matching timeline card. Compare its summary and artifacts with the available logs. If a job ran, record its ID and result. A successful path can display *Auto-Remediated* or *Remediated*, depending on whether a ticket was also recorded.
-. In *NOC Chat*, ask: `Explain the difference between a successful mock AAP job and verified Kubernetes recovery.` Check the model source below the response. Treat this as an explanation: chat receives recent audit summaries and integration status, not the complete investigation or every incident's evidence.
+. In the *AAP console*, find the job with the recorded ID. Inspect its template, target variables, terminal status, and task output. For the restart path, confirm that the job targets `edge-nginx` in `{edge_namespace}`.
+. In OpenShift, select `{edge_namespace}`, open *Workloads → Deployments → edge-nginx*, and inspect the rollout and pod readiness. Compare the restart time with the AAP job output.
 
 === Verify
 
 * You can connect the incident ID and offset to an audit outcome.
 * You can explain why a template match is checked before execution.
-* You describe mock AAP success as an automation-contract result. The separate edge fast-path watcher and runner can really modify `edge-nginx`; their activity must be assessed separately.
+* For a successful restart, the matching AAP job completes and the target deployment has a new rollout with ready pods.
 
 === Troubleshooting
 
-If no card appears, check Kafka and agent health using xref:04-readiness.adoc[deployment readiness]. A successful publish only queues work. If the guard rejects the restart, inspect the outcome and ticket instead of assuming the system is broken. An unavailable model or tool is a dependency problem and must be distinguished from an evidence-based escalation.
+If no card appears, check Kafka and agent health using xref:04-readiness.adoc[application readiness]. A successful publish only queues work. If the guard rejects the restart, inspect the outcome and ticket instead of assuming the system is broken. For a failed AAP job, inspect its task output and share the job ID with the facilitator.
 
-== Check your understanding
-
-Why can the alert describe a CrashLoop while the current Kubernetes observations show a healthy workload?
-
-Expected answer: the alert input is simulated, while Kubernetes observations are real and reflect the current tenant workload. The analysis must assess both sources; the alert alone does not prove the present cluster state.
-
-Continue to xref:06-network-oom.adoc[compare an OOM remediation].
+Continue to xref:06-network-oom.adoc[compare OOM remediation and Lightspeed playbook generation].

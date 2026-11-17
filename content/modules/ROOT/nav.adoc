@@ -1,17 +1,19 @@
-* xref:index.adoc[Start here]
-* xref:01-overview.adoc[Workshop overview]
+* xref:index.adoc[Introduction]
+* xref:01-overview.adoc[Workflow and architecture]
 * xref:02-details.adoc[Access and lab details]
 
+.Get started
+* xref:03-environment.adoc[1. Explore the applications]
+* xref:04-readiness.adoc[2. Check application readiness]
+
 .Network investigation and remediation
-* xref:03-environment.adoc[1. Understand the environment]
-* xref:04-readiness.adoc[2. Check deployment readiness]
 * xref:05-network-crashloop.adoc[3. Run the Network happy path]
-* xref:06-network-oom.adoc[4. Compare another remediation]
+* xref:06-network-oom.adoc[4. Compare remediation approaches]
 * xref:07-network-escalation.adoc[5. Follow an escalation]
 
 .RAN detection and root-cause analysis
 * xref:08-ran-workflow.adoc[6. Run the RAN workflow]
 * xref:09-ran-scenarios.adoc[7. Explore RAN scenarios]
 
-.Operational handoff
-* xref:10-integrations-cleanup.adoc[8. Connect the demo to real users]
+.Wrap-up
+* xref:10-conclusion.adoc[Conclusion]
