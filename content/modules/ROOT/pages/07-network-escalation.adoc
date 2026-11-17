@@ -26,17 +26,17 @@ Estimated time: 10 minutes.
 
 == Exercise 2: Read the mock ticket
 
-The dashboard exposes the ticket number, rather than a ServiceNow ticket-detail screen. Inspect the record through a facilitator-assisted read of the tenant's mock API.
+The dashboard exposes the ticket number, rather than a ServiceNow ticket-detail screen. Inspect the record with the facilitator.
 
 [NOTE]
 ====
-The packaged learner role grants read-only console access and does not grant pod terminal access. Ask an authorized facilitator to run the lookup below in your assigned tenant and share only the resulting ticket fields. You inspect that output alongside your incident notes; no extra learner permissions are needed.
+Ask an authorized facilitator to run the lookup below in the application namespace and share the resulting ticket fields.
 ====
 
 . Give the facilitator your application namespace and the *SNOW* number from your matching timeline card.
 . The facilitator selects your application namespace in the *OpenShift Console*, opens *Workloads → Pods*, selects `servicenow-mock`, and opens its *Terminal* tab. They replace `TICKET_NUMBER_FROM_YOUR_INCIDENT` below with your number and run this local read-only lookup. Credentials are read from the pod environment and are not printed.
 +
-[source,shell]
+[source,text]
 ----
 python - <<'PY'
 import base64
@@ -53,7 +53,7 @@ request.add_header("Authorization", "Basic " + base64.b64encode(credentials.enco
 with urlopen(request, timeout=10) as response:
     records = json.load(response)["result"]
 if not records:
-    raise SystemExit("No matching mock ticket. Check the number and tenant namespace.")
+    raise SystemExit("No matching mock ticket. Check the number and application namespace.")
 record = records[0]
 for field in ("number", "short_description", "priority", "state", "description"):
     print(f"{field}: {record.get(field, 'unavailable')}")
@@ -67,7 +67,7 @@ PY
 
 * The returned ticket number matches the incident's *SNOW* artifact.
 * The ticket provides operational context for a human review.
-* You describe the ticket as simulated ServiceNow storage within this tenant. The mock keeps records in memory; restarting it can remove them.
+* You describe the ticket as simulated ServiceNow storage. The mock keeps records in memory; restarting it can remove them.
 
 == Interpret a failed remediation result
 
@@ -75,12 +75,6 @@ The audit field `remediation_success` describes corrective automation. With no s
 
 === Troubleshooting
 
-If *SNOW* is `n/a`, inspect the agent logs for a ServiceNow error and check the mock and MCP dependencies. An *Escalated* label alone does not prove ticket creation. If the lookup returns no record, check the exact number, tenant namespace, and whether the mock restarted. The dashboard's generic Slack or Langfuse references do not require either service in this profile.
-
-== Check your understanding
-
-What would justify pausing automation even when the LLM sounds confident?
-
-Expected answer: missing evidence, an unsupported corrective action, or a failed or unavailable playbook-match guard. A human should review the handoff before changing a real system.
+If *SNOW* is `n/a`, inspect the agent logs for a ServiceNow error and check the mock and MCP dependencies. An *Escalated* label alone does not prove ticket creation. If the lookup returns no record, check the exact number, application namespace, and whether the mock restarted.
 
 Continue to xref:08-ran-workflow.adoc[run the separate RAN workflow]. RAN does not use Network's ServiceNow escalation path.

@@ -6,17 +6,15 @@ The walkthrough covers Network investigation, remediation, and escalation, follo
 == Read the workshop
 
 Start at link:content/modules/ROOT/pages/index.adoc[the welcome page].
-The eight modules follow the sequence in link:content/modules/ROOT/nav.adoc[the navigation].
+The seven modules and conclusion follow the sequence in link:content/modules/ROOT/nav.adoc[the navigation].
 
-The profile uses one OpenShift cluster, a tenant application namespace, and a tenant-specific edge namespace.
-Both RAN predictors run locally on CPU.
-LLM inference uses real external MaaS.
-AAP execution and Network ServiceNow tickets use tenant mocks.
+The exercises use real Ansible Automation Platform (AAP) jobs and Red Hat Ansible Lightspeed playbook generation.
+Both RAN predictors run on CPU, and LLM inference uses external MaaS.
+Network jobs target the example Kubernetes workload; RAN jobs update a controlled simulator.
+Network ServiceNow tickets remain mocked.
 
 == Draft status
 
-The content is checked against the local quickstart source, including its in-progress tenant packaging.
-Installation, runtime URL/user-data wiring, reset, and teardown must pass a fresh RHDP lifecycle test before publication.
 No live deployment verification is claimed.
 
 See link:docs/authoring-and-validation.adoc[authoring notes and publication validation] for the proposed runtime attributes, evidence sources, and outstanding checks.
@@ -36,7 +34,7 @@ NODE_PATH="$PWD/.cache/antora-tools/node_modules" \
 
 The output is in `www/`.
 The initial build needs network access for dependencies and the UI bundle.
-Preview builds intentionally show namespace placeholders until provisioning supplies the assigned tenant attributes.
+Preview builds use namespace placeholders; runtime values come from the Showroom configuration.
 The original template's authoring examples remain in `examples/`; template developer-guide pages were removed from the learner site.
 
 == Reference

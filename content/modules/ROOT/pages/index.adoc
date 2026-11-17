@@ -1,36 +1,26 @@
 = AI-Driven Network Remediation
-:navtitle: Start here
+:navtitle: Introduction
 
-Investigate a network incident, follow an AI-assisted remediation decision, and compare that workflow with radio access network (RAN) anomaly detection and root-cause analysis.
-Use two dashboards on a single OpenShift cluster to connect evidence, model output, automation, and human escalation.
+You are an engineer in a network operations team.
+An alert alone does not tell you whether automation is appropriate: you need observations, relevant operating procedures, a defensible decision, and a record of what happened.
 
-[IMPORTANT]
-====
-This workshop is a draft for the agreed tenant deployment profile.
-Tenant GitOps packaging, runtime access wiring, installation, reset, and cleanup require validation in a freshly provisioned environment before publication.
-Begin with a facilitator-provisioned seat; this draft does not provide a validated installation procedure.
-====
+This quickstart brings investigation, AI-assisted diagnosis, and automation together so operators can follow an incident from its first signal to a recorded outcome.
+This walkthrough introduces the components and guides you through the Network and radio access network (RAN) dashboards.
 
-== Two stories, one environment
+== What you will learn
 
-* *Network:* Follow CrashLoop and out-of-memory (OOM) incidents through investigation and runbook retrieval to a guarded automation decision. Inspect intentional escalation to a mock ServiceNow ticket.
-* *RAN:* Send sample key performance indicators (KPIs) through two real CPU predictors, then inspect retrieved documentation, a Models-as-a-Service (MaaS) explanation, and a mock automation result.
+* Follow an incident from investigation and runbook retrieval to an automation decision.
+* Use Ansible Automation Platform (AAP) and Red Hat Ansible Lightspeed to run existing playbooks or generate a new response.
+* Follow RAN anomaly detection, root-cause classification, and an AI-generated explanation.
+* Inspect automation results and incidents that need human investigation.
 
-== How to read the evidence
+== Before you begin
 
-[cols="1,3",options="header"]
-|===
-|Evidence label |Meaning
-|*Real*
-|Kubernetes observations, Kafka messaging, document retrieval, external MaaS inference, and both local RAN predictors run against live services.
-|*Simulated*
-|Demo alerts and KPI inputs are controlled samples. Ansible Automation Platform (AAP) executions and Network ServiceNow tickets use mocks.
-|*Separate real behavior*
-|The edge fast-path watcher and runner can change the example edge workload independently of mock AAP execution.
-|===
-
-A successful mock job demonstrates an integration and its recorded result.
-It does not prove that a workload, network device, or radio was repaired.
+This walkthrough is intended for site reliability engineers, platform engineers, and network engineers with basic Kubernetes knowledge.
+You should recognize pods, deployments, namespaces, and logs.
+Model training, GPUs, and cluster administration are not required.
 
 Allow about *{lab-duration}*.
-Start with xref:01-overview.adoc[the workshop overview], then xref:02-details.adoc[check your access details].
+The application access links and credentials are in your service details.
+
+Continue to xref:01-overview.adoc[workflow and architecture] for a tour of the system before opening the applications.
