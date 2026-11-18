@@ -1,4 +1,4 @@
-= Module 3: Follow the Network happy path
+= Module 2: Follow the Network happy path
 :toc: macro
 :toclevels: 1
 
@@ -38,16 +38,32 @@ flowchart TB
 Generated playbooks are stored in Gitea and synchronized with the AAP project before execution.
 ServiceNow tickets use the lab's mock integration.
 
+== Conventions for the Network exercises
+
+* Demo buttons publish controlled alerts; they do not create the reported pod failure. AAP jobs make real changes to the lab workloads.
+* Use your own incident ID and input topic/offset to follow each run. The audit offset belongs to the output topic and can differ.
+* Examples are shortened. IDs, model decisions, and outcomes can vary; record the actual result and any unavailable evidence.
+* Trigger each scenario once and wait for its outcome before starting another. If no card appears, revisit xref:03-environment.adoc[application readiness].
+
 == Exercise 1: Trigger and identify an incident
+
+The alert describes a stalled nginx worker. The intended response uses `restart-nginx` to roll out `edge-nginx`.
 
 . Open the *Network dashboard* and locate *Demo Mode*.
 . Click *Trigger CrashLoop Demo* once. Record the returned *Incident ID*, *Topic*, *Offset*, *Target*, and *Event* before triggering another scenario.
-. Read the event. It describes a `CrashLoopBackOff` condition and proposes a restart. This is a simulated alert published through real Kafka messaging; the button does not itself crash a pod.
++
+.Example CrashLoop trigger result.
+image::network-crashloop-trigger.png[CrashLoop demo trigger result with incident ID topic offset target and event,link=self,window=blank]
++
+. Read the event and note the reported condition and proposed restart.
 . In *Incident Timeline*, click *Expand*. Wait for the card with your incident ID. Record its stage, summary, *AAP Job*, and *SNOW* values. Processing and dashboard refresh are asynchronous.
+
+.Example completed CrashLoop incident. Its AAP job ID identifies the execution to inspect.
+image::network-crashloop-timeline.png[CrashLoop incident timeline showing incident ID status and AAP job ID,link=self,window=blank]
 
 [IMPORTANT]
 ====
-The timeline summarizes completed audit records. It does not display every graph node as a live sequence. The LLM can choose a different outcome on another run. Preserve the actual incident ID and evidence instead of repeatedly clicking until the text matches an example.
+The timeline shows completed audit records, rather than a live sequence of every workflow node.
 ====
 
 === Verify
@@ -59,22 +75,38 @@ The timeline summarizes completed audit records. It does not display every graph
 == Exercise 2: Follow the decision and restart
 
 . Open the *OpenShift Console*. In the application namespace identified in your lab details, open *Workloads → Pods*, select the `agent-service` pod, and open *Logs*.
-. Find the workflow invocation with the topic and offset you recorded. Locate the completion message containing your incident ID. Within that interval, inspect available entries for normalization, investigation, RAG retrieval, analysis, the decision, and the playbook guard. Log detail depends on the deployed log level; record missing details as unavailable.
-. Use this sequence to explain the roles of the components:
+. Find the workflow invocation with the topic and offset you recorded. Locate the completion message containing your incident ID. Inspect the investigation entries between them. Log detail depends on the deployed log level; record missing details as unavailable.
 +
-[cols="1,3",options="header"]
-|===
-|Stage |What it contributes
-|Normalization and investigation |Structure the simulated alert and obtain real Kubernetes observations through MCP tools.
-|Runbook retrieval |Search the ingested knowledge base for relevant operational guidance.
-|LLM analysis |Combine the alert, available observations, and retrieved context into a root-cause assessment and recommendations.
-|Decision and guard |Check confidence and whether the candidate playbook fits the assessed cause. The expected CrashLoop candidate is `restart-nginx`; a guard error causes escalation.
-|Action and audit |Launch and poll the AAP job, or create a mock ServiceNow escalation, then publish the incident outcome to Kafka.
-|===
-
+In the example below, the agent requested pod logs, deployment information, and a pod specification through MCP tools. The investigation summary reports that pod logs were available; `RAG retrieval node invoked` shows that retrieval started, but does not by itself show what it returned.
++
+[source,text]
+----
+Kafka alert received topic=system-alerts partition=0 offset=22
+Investigate node invoked
+MCP tool invoke: get_pod_logs ...
+MCP tool invoke: get_deployment ...
+MCP tool invoke: get_pod_spec ...
+Investigate finished: events=0 errors=0 log_results=0 has_pod_logs=True
+RAG retrieval node invoked
+----
++
+. Continue to the analysis, decision, and job entries. In this example, the assessment describes a transient failure, the guard accepts `restart-nginx`, and job 80 completes. Compare those entries with your own incident.
++
+[source,text]
+----
+Root cause analysis: {"failure_type":"CrashLoopBackOff",
+  "summary":"nginx pod crash looping due to transient failure", ...}
+Playbook guard verdict for restart-nginx: MATCH
+MCP tool launch_job succeeded, response={'success': True, 'job_id': 80, ... 'status': 'pending', ...}
+MCP tool get_job_status succeeded, response={'success': True, 'job_id': 80, 'status': 'successful', ...}
+Audit record published incident_id=928ab50e-c6c7-4490-95e8-36b5f3098fbd decision=remediate topic=incident-audit offset=22
+----
++
+The audit record links the decision to the incident card.
++
 . Return to the matching timeline card. Compare its summary and artifacts with the available logs. If a job ran, record its ID and result. A successful path can display *Auto-Remediated* or *Remediated*, depending on whether a ticket was also recorded.
-. In the *AAP console*, find the job with the recorded ID. Inspect its template, target variables, terminal status, and task output. For the restart path, confirm that the job targets `edge-nginx` in `{edge_namespace}`.
-. In OpenShift, select `{edge_namespace}`, open *Workloads → Deployments → edge-nginx*, and inspect the rollout and pod readiness. Compare the restart time with the AAP job output.
+. If a job ran, find its ID in the *AAP console* and inspect its template, target variables, status, and output. For a restart, confirm that it targets `edge-nginx` in `{edge_namespace}`. If no job ran, record the outcome and continue to the next module.
+. After a restart job, open *Workloads → Deployments → edge-nginx* in `{edge_namespace}`. Compare its rollout and pod readiness with the job output.
 
 === Verify
 
@@ -84,6 +116,6 @@ The timeline summarizes completed audit records. It does not display every graph
 
 === Troubleshooting
 
-If no card appears, check Kafka and agent health using xref:04-readiness.adoc[application readiness]. A successful publish only queues work. If the guard rejects the restart, inspect the outcome and ticket instead of assuming the system is broken. For a failed AAP job, inspect its task output and share the job ID with the facilitator.
+If no card appears, check Kafka and agent health using xref:03-environment.adoc[application readiness]. If the guard rejects the restart, inspect the outcome and ticket instead of assuming the system is broken. For a failed AAP job, inspect its task output and record the job ID and error.
 
 Continue to xref:06-network-oom.adoc[compare OOM remediation and Lightspeed playbook generation].

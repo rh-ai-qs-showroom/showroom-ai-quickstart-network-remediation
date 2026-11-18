@@ -3,17 +3,16 @@
 * xref:02-details.adoc[Access and lab details]
 
 .Get started
-* xref:03-environment.adoc[1. Explore the applications]
-* xref:04-readiness.adoc[2. Check application readiness]
+* xref:03-environment.adoc[1. Explore applications and check readiness]
 
 .Network investigation and remediation
-* xref:05-network-crashloop.adoc[3. Run the Network happy path]
-* xref:06-network-oom.adoc[4. Compare remediation approaches]
-* xref:07-network-escalation.adoc[5. Follow an escalation]
+* xref:05-network-crashloop.adoc[2. Follow the Network happy path]
+* xref:06-network-oom.adoc[3. Compare remediation approaches]
+* xref:07-network-escalation.adoc[4. Follow an escalation]
 
 .RAN detection and root-cause analysis
-* xref:08-ran-workflow.adoc[6. Run the RAN workflow]
-* xref:09-ran-scenarios.adoc[7. Explore RAN scenarios]
+* xref:08-ran-workflow.adoc[5. Follow the RAN workflow]
+* xref:09-ran-scenarios.adoc[6. Explore RAN scenarios]
 
 .Wrap-up
 * xref:10-conclusion.adoc[Conclusion]

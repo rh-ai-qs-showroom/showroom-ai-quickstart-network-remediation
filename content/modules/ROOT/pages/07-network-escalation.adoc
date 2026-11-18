@@ -1,80 +1,61 @@
-= Module 5: Follow an intentional escalation
+= Module 4: Follow an intentional escalation
 :toc: macro
 :toclevels: 1
 
-An on-call engineer needs a useful handoff when the system cannot justify a safe automated change. This scenario supplies incomplete evidence so you can inspect the escalation path and its mock ticket.
+An on-call engineer needs a useful handoff when the system cannot justify a safe automated change. This scenario supplies incomplete evidence so you can inspect the escalation path and its mock ticket reference.
 
 Estimated time: 10 minutes.
 
 == Learning objectives
 
 * Distinguish successful escalation from successful remediation.
-* Inspect the mock ServiceNow record associated with an incident.
+* Identify the mock ServiceNow ticket associated with an incident.
 * Identify the evidence a human needs before approving a corrective action.
 
-== Exercise 1: Trigger the handoff
+== Exercise: Trigger and review the handoff
+
+The alert reports intermittent failures without enough evidence for a safe change. The intended response is a mock ServiceNow ticket for human review.
 
 . In the *Network dashboard*, click *Trigger Escalation Demo* once.
-. Record the *Incident ID*, Kafka *Topic* and *Offset*, and the *Event*. The simulated input describes intermittent failures without an identified affected component or safe corrective change.
-. Expand *Incident Timeline* and find the matching incident. Record its stage, summary, *AAP Job*, and *SNOW* ticket number. The intended outcome is *Escalated* with a mock ticket. The LLM may assess each run differently; investigate the actual result.
-. Correlate the execution in the application namespace's `agent-service` pod *Logs*. Inspect available analysis and decision entries and the ticket-creation result. A failed remediation can also lead here after an AAP launch failure, unsuccessful job, or timeout.
-
-=== Verify
-
-* You have a matching audit outcome and a recorded ticket number when ticket creation succeeded.
-* You distinguish the reason automation could not proceed from the result of creating the ticket.
-
-== Exercise 2: Read the mock ticket
-
-The dashboard exposes the ticket number, rather than a ServiceNow ticket-detail screen. Inspect the record with the facilitator.
-
-[NOTE]
-====
-Ask an authorized facilitator to run the lookup below in the application namespace and share the resulting ticket fields.
-====
-
-. Give the facilitator your application namespace and the *SNOW* number from your matching timeline card.
-. The facilitator selects your application namespace in the *OpenShift Console*, opens *Workloads → Pods*, selects `servicenow-mock`, and opens its *Terminal* tab. They replace `TICKET_NUMBER_FROM_YOUR_INCIDENT` below with your number and run this local read-only lookup. Credentials are read from the pod environment and are not printed.
++
+.Example escalation trigger.
+image::network-escalation-trigger.png[Escalation demo trigger result with incident ID topic offset and event,link=self,window=blank]
++
+. Record the *Incident ID*, Kafka *Topic* and *Offset*, and the *Event*.
+. Expand *Incident Timeline* and find the matching incident. Record its stage, summary, *AAP Job*, and *SNOW* ticket number. The intended outcome is *Escalated* with a mock ticket.
++
+.Example escalated incident with a mock ticket number.
+image::network-escalation-timeline.png[Escalated incident showing failed remediation and a mock SNOW ticket number,link=self,window=blank]
++
+The card can show *Escalated* with `Result: failed`: the result describes corrective automation, while a valid *SNOW* number confirms the handoff. The dashboard has no ticket-detail screen; use the card and agent logs below.
++
+. In the application namespace's `agent-service` pod *Logs*, find the workflow using your topic and offset. Compare the available analysis and decision with the ticket-creation result.
++
+In the example below, the analysis classified the issue as `Unknown` with confidence `0.5`: the available logs ended before the reported failures, and no affected component or safe change had been established. The ticket response supplies the *SNOW* number on the example card.
 +
 [source,text]
 ----
-python - <<'PY'
-import base64
-import json
-import os
-from urllib.parse import urlencode
-from urllib.request import Request, urlopen
-
-ticket = "TICKET_NUMBER_FROM_YOUR_INCIDENT"
-query = urlencode({"sysparm_query": f"number={ticket}", "sysparm_limit": 1})
-request = Request(f"http://localhost:8080/api/now/table/incident?{query}")
-credentials = os.environ["SERVICENOW_USERNAME"] + ":" + os.environ["SERVICENOW_PASSWORD"]
-request.add_header("Authorization", "Basic " + base64.b64encode(credentials.encode()).decode())
-with urlopen(request, timeout=10) as response:
-    records = json.load(response)["result"]
-if not records:
-    raise SystemExit("No matching mock ticket. Check the number and application namespace.")
-record = records[0]
-for field in ("number", "short_description", "priority", "state", "description"):
-    print(f"{field}: {record.get(field, 'unavailable')}")
-PY
+Kafka alert received topic=system-alerts partition=0 offset=25
+Root cause analysis: {"failure_type":"Unknown","confidence":0.5,
+  "summary":"Intermittent request failures reported by clients; available logs end before the failures. ...", ...}
+Decide node invoked
+MCP tool create_incident succeeded, response={'success': True, 'ticket_number': 'INC0010327', ...}
+Audit record published incident_id=166143b8-6dd6-4d54-bfe0-388ed3bcf99a decision=escalate topic=incident-audit offset=25
 ----
-
-. Compare the ticket number, target namespace and pod, assessed failure type, confidence, evidence, and recommended actions with your incident notes. If automation was attempted and failed, look for the failed action, available job ID, and output in the description.
-. Identify what a human must investigate next. Missing or weak evidence is part of the handoff; do not replace it with a chat-generated explanation.
++
+The audit record links the decision to your incident. A failed AAP job or timeout can also lead to escalation.
++
+. If automation was attempted, use its recorded job ID to inspect the result in AAP.
+. Note why automation could not proceed, any missing evidence, and what a human should investigate next.
 
 === Verify
 
-* The returned ticket number matches the incident's *SNOW* artifact.
-* The ticket provides operational context for a human review.
-* You describe the ticket as simulated ServiceNow storage. The mock keeps records in memory; restarting it can remove them.
-
-== Interpret a failed remediation result
-
-The audit field `remediation_success` describes corrective automation. With no successful corrective action, it is false, even when ticket creation succeeds. The timeline can therefore report *Escalated* with a summary containing `Result: failed` and a valid *SNOW* number. That combination means remediation did not succeed and the handoff did. Confirm the ticket artifact instead of treating the word `failed` as proof that ticket creation failed.
+* You can connect the incident to its audit decision and explain the reason for escalation.
+* You recorded the ticket number when creation succeeded, or identified why it is unavailable.
+* You identified the evidence needed for the next investigation step.
 
 === Troubleshooting
 
-If *SNOW* is `n/a`, inspect the agent logs for a ServiceNow error and check the mock and MCP dependencies. An *Escalated* label alone does not prove ticket creation. If the lookup returns no record, check the exact number, application namespace, and whether the mock restarted.
+If *SNOW* is `n/a`, inspect the agent logs for a ServiceNow error and check the mock and MCP dependencies. An *Escalated* label alone does not prove ticket creation. If a previously recorded ticket is unavailable, the mock might have restarted and removed its in-memory records.
 
-Continue to xref:08-ran-workflow.adoc[run the separate RAN workflow]. RAN does not use Network's ServiceNow escalation path.
+Continue to xref:08-ran-workflow.adoc[follow the RAN workflow].

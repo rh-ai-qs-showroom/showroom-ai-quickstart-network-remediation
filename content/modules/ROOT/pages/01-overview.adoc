@@ -6,10 +6,35 @@ They share supporting services and have linked dashboards, while processing thei
 
 image::incident-response.svg[Network and RAN workflows sharing model and reference services with AAP remediation and Network ServiceNow escalation,link=self,window=blank,width=1000]
 
+== Network: investigate, decide, and respond
+
+A controlled alert enters Kafka and starts the Network agent.
+The agent gathers current Kubernetes observations through Model Context Protocol (MCP) tools, retrieves relevant runbooks, and uses the language model to assess the cause and a suitable response.
+
+The decision can follow one of three paths:
+
+* Run an existing Ansible Automation Platform (AAP) template when the assessment and playbook-match guard support it.
+* Ask Red Hat Ansible Lightspeed to generate a playbook when a corrective action is established and no existing template fits, then validate and execute it through AAP.
+* Escalate to a mock ServiceNow ticket when automation is unsupported or a Lightspeed generation or execution attempt fails.
+
+The workflow publishes its recorded outcome for the Network dashboard, including available job and ticket references.
+The lab uses real AAP execution against its example workloads.
+
+== RAN: detect, classify, explain, and respond
+
+A controlled key performance indicator (KPI) window enters Kafka.
+The anomaly predictor decides whether it is unusual.
+Normal results stop at detection; anomalous results continue to the root-cause analysis (RCA) predictor, which assigns a fault category.
+
+Retrieved RAN documentation and the Models-as-a-Service (MaaS) language model supply an explanation and recommended fix.
+The remediation service maps the predictor's category to an existing AAP template and executes it against the lab's RAN simulator.
+The language model does not choose the category or template, and this workflow has no Lightspeed or ServiceNow branch.
+
+The RAN dashboard brings together the prediction, explanation, and automation result for each incident.
+
 == Components and their roles
 
-The diagram summarizes the main paths.
-The table also includes supporting components used throughout the lab.
+Use this table as a reference during the exercises.
 
 [cols="1,3",options="header"]
 |===
@@ -17,11 +42,11 @@ The table also includes supporting components used throughout the lab.
 |Kafka
 |Carries alerts, measurement windows, diagnoses, and outcomes between workflow services on separate event streams.
 |Network agent and MCP tools
-|The agent investigates alerts and chooses a response. Model Context Protocol (MCP) tools obtain current Kubernetes observations and provide access to automation and ticketing.
+|The agent investigates alerts and chooses a response. MCP tools obtain current Kubernetes observations and provide access to automation and ticketing.
 |Mantis predictors
-|Two CPU-based predictors perform separate tasks: anomaly detection identifies unusual measurement windows; root-cause analysis (RCA) assigns a fault category.
+|Two CPU-based predictors perform separate tasks: anomaly detection identifies unusual measurement windows; RCA assigns a fault category.
 |Llama Stack and MaaS
-|Llama Stack connects services to the language model through Models-as-a-Service (MaaS), document retrieval, and the Network workflow's tools. The language model supports Network diagnosis and explains RAN predictions.
+|Llama Stack connects services to the language model through MaaS, document retrieval, and the Network workflow's tools. The language model supports Network diagnosis and explains RAN predictions.
 |Document ingestion, object storage, and pgvector
 |Ingestion prepares Network runbooks and RAN reference documents from object storage for retrieval-augmented generation (RAG). Separate collections in PostgreSQL/pgvector provide relevant passages for each workflow.
 |Ansible Automation Platform (AAP)
@@ -33,31 +58,5 @@ The table also includes supporting components used throughout the lab.
 |Network and RAN dashboards
 |Show each workflow's incidents and results and provide chat. Navigation links connect the dashboards; their incident lists remain separate.
 |===
-
-== Network: investigate, decide, and respond
-
-A controlled alert enters Kafka and starts the Network agent.
-The agent gathers current Kubernetes observations through MCP, retrieves relevant runbooks, and uses the language model to assess the cause and a suitable response.
-
-The decision can follow one of three paths:
-
-* Run an existing AAP template when the assessment and playbook-match guard support it.
-* Ask Lightspeed to generate a playbook when a corrective action is established and no existing template fits, then validate and execute it through AAP.
-* Escalate to a mock ServiceNow ticket when automation is unsupported or a Lightspeed generation or execution attempt fails.
-
-The workflow publishes its recorded outcome for the Network dashboard, including available job and ticket references.
-The lab uses real AAP execution against its example workloads.
-
-== RAN: detect, classify, explain, and respond
-
-A controlled key performance indicator (KPI) window enters Kafka.
-The anomaly predictor decides whether it is unusual.
-Normal results stop at detection; anomalous results continue to the RCA predictor, which assigns a fault category.
-
-Retrieved RAN documentation and the MaaS language model supply an explanation and recommended fix.
-The remediation service maps the predictor's category to an existing AAP template and executes it against the lab's RAN simulator.
-The language model does not choose the category or template, and this workflow has no Lightspeed or ServiceNow branch.
-
-The RAN dashboard brings together the prediction, explanation, and automation result for each incident.
 
 Continue to xref:02-details.adoc[access and lab details].

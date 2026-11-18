@@ -1,4 +1,4 @@
-= Module 6: Follow the RAN workflow
+= Module 5: Follow the RAN workflow
 :toc: macro
 :toclevels: 1
 
@@ -32,14 +32,20 @@ flowchart TB
 
 Both Mantis predictors run on CPU in the application namespace. The anomaly predictor answers whether a window is anomalous. The root-cause predictor assigns a fault category. Each sample contains 128 timesteps across 18 KPI channels.
 
-Retrieval supplies documentation from `telco_oran_docs`. The external MaaS LLM explains the predicted fault and recommends a fix. The remediation service maps the classifier's category to an AAP template; the LLM does not select the category or job. This path does not create Network ServiceNow escalation tickets.
+The classifier determines the AAP template. The MaaS LLM uses `telco_oran_docs` to explain the fault and recommend a fix.
 
 == Exercise 1: Inject and identify a sample
 
+The antenna failure button publishes a sample KPI window. If the predictors classify it as an antenna failure, the workflow maps it to `ran-cell-recovery`, which updates the controlled RAN simulator. Follow the actual classification and job, then verify the simulator state.
+
 . Open the RAN dashboard using your assigned URL, and authenticate with OpenShift if prompted. Select *Anomaly List* if the grid view is open.
-. Review dependency warnings. Resolve required dependency failures using xref:04-readiness.adoc[application readiness] before interpreting a missing result.
+. Review dependency warnings. Resolve required dependency failures using xref:03-environment.adoc[application readiness] before interpreting a missing result.
 . Under *Demo Mode*, click *Antenna Failure* once.
 . Record the returned *Incident*, scenario, *Topic*, and *Offset*. These identify the injected sample and its Kafka publication. They do not yet demonstrate successful detection or remediation.
++
+.Example antenna failure trigger.
+image::ran-antenna-trigger.png[Antenna failure demo trigger showing incident ID topic and offset,link=self,window=blank]
++
 . Wait for the dashboard to refresh. Find that exact incident ID under *Recent Anomalies*. Processing is asynchronous; the trigger's timing hint is not a completion guarantee.
 
 === Verify
@@ -49,12 +55,18 @@ Retrieval supplies documentation from `telco_oran_docs`. The external MaaS LLM e
 
 == Exercise 2: Follow diagnosis and automation
 
-. On the matching card, record *Anomaly detection confidence*, *Mantis RCA*, and *RCA confidence*. The intended classification is `Antenna Failure`; record the actual prediction if it differs.
+. On the matching card, record *Anomaly detection confidence*, *Mantis RCA*, and *RCA confidence*.
++
+.Example incident card from a run with mocked AAP. The job output is simulated; your lab uses real AAP, so job IDs and output will differ.
+image::ran-antenna-incident.png[Antenna failure incident card showing prediction explanation and simulated job outcome,link=self,window=blank]
++
+The intended classification is `Antenna Failure`; record the actual prediction if it differs.
++
 . Read *LLM Explanation* and *Recommended Fix*. Note one KPI or documentation reference used to explain the fault. If no reference is present, record that limitation instead of supplying one yourself.
 . Inspect *Job*, *Job outcome*, *Job ID*, and *Job result* as they appear. For an `Antenna Failure` classification, the mapping selects `ran-cell-recovery`.
 . In *RAN Chat*, enter `Explain incident YOUR-INCIDENT-ID and its recommended fix`, replacing the placeholder with your ID. Check that the response refers to your incident. Compare its explanation with the card, and record the model source displayed beneath the chat.
-. In the *AAP console*, open the job with the recorded ID. Check the selected template, incident variables, task output, and terminal status. The full template name may include an environment-specific prefix before `ran-cell-recovery`.
-. In the *OpenShift Console*, select `{edge_namespace}`, open *Workloads → ConfigMaps*, and inspect `adnr-ran-state`. Check that `status` is `healthy`, `incident_id` matches this run, and `last_action` matches the selected action. For an `Antenna Failure` classification, expect `last_action` to be `ran-cell-recovery`.
+. If a job ID is present, open that job in the *AAP console*. Check its template, incident variables, output, and status. The template name may include a prefix before `ran-cell-recovery`. If no job was launched, record the displayed failure stage.
+. If a job ran, inspect `adnr-ran-state` under *Workloads → ConfigMaps* in `{edge_namespace}`. For a successful run, check that `status` is `healthy`, `incident_id` matches this run, and `last_action` matches the selected action. For `Antenna Failure`, expect `ran-cell-recovery`.
 
 === Verify
 
@@ -69,6 +81,6 @@ AAP executes a real playbook against a controlled RAN simulator. The KPI input i
 
 == Troubleshooting
 
-If the card reports `rca_classification`, inspect the predictor dependency. If an explanation is unavailable, record the displayed error; a valid classifier result can still proceed to mapped automation even when the LLM explanation fails. A failed job is a separate automation outcome. Return to readiness checks when dependencies are unavailable, and preserve the incident ID for the facilitator.
+If the card reports `rca_classification`, inspect the predictor dependency. If an explanation is unavailable, record the displayed error; a valid classifier result can still proceed to mapped automation even when the LLM explanation fails. A failed job is a separate automation outcome. Return to readiness checks when dependencies are unavailable, and record the incident ID and any displayed error.
 
-Continue to xref:09-ran-scenarios.adoc[Module 7: Explore RAN scenarios].
+Continue to xref:09-ran-scenarios.adoc[Module 6: Explore RAN scenarios].

@@ -6,7 +6,7 @@ The walkthrough covers Network investigation, remediation, and escalation, follo
 == Read the workshop
 
 Start at link:content/modules/ROOT/pages/index.adoc[the welcome page].
-The seven modules and conclusion follow the sequence in link:content/modules/ROOT/nav.adoc[the navigation].
+The six modules and conclusion follow the sequence in link:content/modules/ROOT/nav.adoc[the navigation].
 
 The exercises use real Ansible Automation Platform (AAP) jobs and Red Hat Ansible Lightspeed playbook generation.
 Both RAN predictors run on CPU, and LLM inference uses external MaaS.
