@@ -1,4 +1,4 @@
-= Module 7: Explore RAN scenarios
+= Module 6: Explore RAN scenarios
 :toc: macro
 :toclevels: 1
 
@@ -9,13 +9,23 @@ Try a congestion scenario, then send normal traffic to see when the RAN workflow
 == Learning objectives
 
 * Follow a congestion diagnosis to its mapped automation job.
-* Observe that normal traffic does not trigger root-cause analysis or remediation.
+* Compare the visible results of fault and normal-traffic samples.
 
 == Exercise 1: Try a congestion scenario
 
+This sample represents gradually increasing network congestion. The intended classification maps to the `ran-load-balance` AAP template, which updates the RAN simulator. Check the actual classification and job outcome on the incident card.
+
 . In the RAN dashboard, select *Anomaly List*. Under *Demo Mode*, click *High Network Congestion (Gradual Buildup)* once.
++
+.Example congestion trigger.
+image::ran-congestion-trigger.png[Congestion demo trigger showing incident ID topic and offset,link=self,window=blank]
++
 . Wait for the new card under *Recent Anomalies*. Use the incident ID returned by the trigger to identify it.
 . Read *Mantis RCA*, *LLM Explanation*, and *Recommended Fix*. The intended classification is `High Network Congestion (Gradual Buildup)`, with a recommendation addressing congestion. Model predictions and explanation wording can vary.
++
+.Example congestion incident from a run with mocked AAP. The job output is simulated; your lab uses real AAP.
+image::ran-congestion-incident.png[Congestion incident card showing classification explanation and simulated job outcome,link=self,window=blank]
++
 . Check *Job* and *Job outcome* on the same card. The congestion category maps to `ran-load-balance`; a successful job shows the *Remediated* badge.
 
 === Verify
@@ -25,19 +35,19 @@ Try a congestion scenario, then send normal traffic to see when the RAN workflow
 
 == Exercise 2: Observe normal traffic
 
+Normal traffic is expected to stop at anomaly detection. The detector does not expose a per-sample completion result for normal predictions, so this exercise records an observation rather than confirming normal classification.
+
 . Wait for the congestion scenario to finish and check that the dashboard shows no required dependency failures.
-. Click *Normal Traffic (No Anomaly)* once. Use the returned incident ID to look for this sample under *Recent Anomalies*.
-. Allow processing and dashboard refreshes. No new anomaly card or automation job is expected for this ID. Earlier fault cards remain visible.
+. Click *Normal Traffic (No Anomaly)* once. Record the returned incident ID, topic, offset, and publication time.
+. Observe *Recent Anomalies* for one minute. Look for the returned incident ID; earlier fault cards remain visible. Check recent AAP jobs for that ID in job details or variables.
+. Record one result: no matching card or job observed, a matching anomaly appeared, or dependency errors prevented the check. Stop the observation after one minute; this interval is an exercise limit, not a processing guarantee.
 
 === Verify
 
-* The trigger confirms that the sample was published.
-* No matching anomaly card or automation job appears while the dashboard remains healthy.
+* You recorded the sample's identifiers, publication time, and observation result.
+* You distinguish successful publication and an absence of visible action from confirmed normal processing.
 
-[NOTE]
-====
-Normal results stop at anomaly detection, so there is no normal-result card. An unchanged list alone does not prove processing completed; if dependency warnings appear or the preceding fault did not finish, ask the facilitator to check the workflow.
-====
+If dependencies fail or processing is in doubt, open the `ran-anomaly-detector` pod's *Logs* in `{app_namespace}`. Find `ran-metrics message received` with the input topic and offset and check for handler or predictor errors. This confirms receipt, not a normal prediction. Record unresolved processing as unconfirmed and share the identifiers with the facilitator.
 
 == Troubleshooting
 

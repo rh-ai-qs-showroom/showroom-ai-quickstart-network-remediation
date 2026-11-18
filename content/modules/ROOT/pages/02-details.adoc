@@ -11,26 +11,27 @@ Use the access links and credentials in your service details.
 |Automation |AAP console link and credentials from your service details
 |===
 
+Use direct links when supplied here or in your service details. If dashboard links are absent, locate their Routes in step 3 below.
+
 ifdef::openshift_console_url[]
-Open the link:{openshift_console_url}[OpenShift console^].
+* link:{openshift_console_url}[OpenShift console^]
 endif::[]
 ifdef::network_dashboard_url[]
-Open the link:{network_dashboard_url}[Network dashboard^].
+* link:{network_dashboard_url}[Network dashboard^]
 endif::[]
 ifdef::ran_dashboard_url[]
-Open the link:{ran_dashboard_url}[RAN dashboard^].
+* link:{ran_dashboard_url}[RAN dashboard^]
 endif::[]
 ifdef::aap_console_url[]
-Open the link:{aap_console_url}[AAP console^].
+* link:{aap_console_url}[AAP console^]
 endif::[]
 
 == Exercise: Sign in and locate the dashboards
 
 . Open *OpenShift Console* in the Showroom right pane, or use the console link in your service details.
-. Sign in with your assigned OpenShift identity.
-. Select your application project. If the console reports restricted access while showing *All Projects*, select your assigned project and retry.
-. In the Administrator perspective, open *Networking → Routes*. Locate `hub-frontend` for Network and `hub-ran-frontend` for RAN, and open each route's location in a separate browser tab.
-. Complete OpenShift authentication for both dashboards. Use the provided route links if your console perspective names menus differently.
+. Sign in with your assigned OpenShift identity and select `{app_namespace}`. If *All Projects* reports restricted access, select your assigned project and retry.
+. Open the Network and RAN dashboard links in separate browser tabs. If links are unavailable, use the Administrator perspective's *Networking → Routes*: open `hub-frontend` for Network and `hub-ran-frontend` for RAN.
+. Complete OpenShift authentication for both dashboards.
 . Open the AAP console from your service details and sign in with the supplied credentials. Keep it available to inspect automation jobs.
 . Keep the OpenShift console available for pod logs and workload checks.
 
@@ -40,15 +41,11 @@ If a link points to an unavailable hostname, use your assigned route rather than
 === Verify
 
 * Both authenticated dashboards load.
-* You can select the assigned application and edge projects.
-* You can open *Workloads → Pods*, select a pod, and view its *Logs*.
-* You can open the AAP console and view your automation jobs.
-* The mock-ticket lookup in Module 5 requires an authorized facilitator to use a pod terminal and share the resulting ticket fields.
+* You can sign in to the AAP console.
 
 === Troubleshooting
 
 An authentication loop, forbidden response in your own project, or inaccessible route is an access/deployment issue.
-Capture the URL, namespace, and error for the facilitator before triggering incidents.
-Opening a dashboard does not demonstrate that its AI dependencies are ready.
+Record the URL, namespace, and error before triggering incidents.
 
-Continue to xref:03-environment.adoc[Module 1: Explore the applications].
+Continue to xref:03-environment.adoc[Module 1: Explore the applications and check readiness].

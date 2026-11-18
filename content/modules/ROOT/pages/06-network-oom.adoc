@@ -1,4 +1,4 @@
-= Module 4: Compare remediation approaches
+= Module 3: Compare remediation approaches
 :toc: macro
 :toclevels: 1
 
@@ -14,45 +14,107 @@ Estimated time: 15 minutes.
 
 == Exercise 1: Run the OOM scenario
 
-. In the *Network dashboard*, click *Trigger OOM Demo* once under *Demo Mode*.
-. Record the new *Incident ID* and *Target*. The controlled alert describes an `OOMKilled` condition, an exceeded memory limit, and restart history.
-. Expand *Incident Timeline* and wait for the card with this incident ID. Review its summary, *AAP Job*, and *SNOW* fields.
-. Compare the selected action with the CrashLoop run. An `OOMKilled` assessment can select `scale-up-workers`, subject to sufficient confidence and the playbook-match guard. Use the action reported for your incident if it differs.
-. Open AAP from your service details. Under *Automation Execution → Jobs*, find the exact job ID from the incident. Review its template, status, and output. The template name can include an environment-specific prefix.
-. In the *OpenShift Console*, select `{edge_namespace}` and open *Workloads → Deployments → edge-nginx*. Check the deployment's replicas, container memory settings, and pod readiness after the job. Compare these with the action shown in the job output.
+The `OOMKilled` alert describes a container exceeding its memory limit. The intended response uses `scale-up-workers` to adjust `edge-nginx` replicas and memory settings and start a rollout.
 
-The bundled `scale-up-workers` playbook increases nginx capacity and restarts its pods. Its default targets are at least three replicas, a `512Mi` memory limit, and a `256Mi` memory request. Review the job's actual parameters when checking the result.
+. Before triggering the alert, open the *OpenShift Console*, select `{edge_namespace}`, and open *Workloads → Deployments → edge-nginx*. Record the replica count, nginx container memory request and limit, and pod readiness. You will compare them with the result.
+. In the *Network dashboard*, click *Trigger OOM Demo* once under *Demo Mode*.
++
+.Example OOM trigger result.
+image::network-oom-trigger.png[OOM demo trigger result with incident ID and target,link=self,window=blank]
++
+. Record the new *Incident ID*, *Topic*, *Offset*, and *Target*. The controlled alert describes an `OOMKilled` condition, an exceeded memory limit, and restart history.
+. Expand *Incident Timeline* and wait for the card with this incident ID. Review its summary, *AAP Job*, and *SNOW* fields.
++
+.Example OOM incident outcome with an AAP job reference.
+image::network-oom-timeline.png[OOM incident timeline showing status and AAP job ID,link=self,window=blank]
++
+. In the application project's `agent-service` pod *Logs*, locate the workflow for your incident's topic and offset. Compare its decision with the CrashLoop run.
++
+The example selects `scale-up-workers` and completes job 81. Compare its assessment and action with the CrashLoop run.
++
+[source,text]
+----
+Kafka alert received topic=system-alerts partition=0 offset=23
+Root cause analysis: {"failure_type":"OOMKilled",
+  "summary":"nginx container in edge-nginx pod exceeded memory limit and was killed", ...}
+Playbook guard verdict for scale-up-workers: MATCH
+MCP tool launch_job succeeded, response={'success': True, 'job_id': 81, ... 'status': 'pending', ...}
+MCP tool get_job_status succeeded, response={'success': True, 'job_id': 81, 'status': 'successful', ...}
+Audit record published incident_id=597b0264-b99c-4429-a36c-959e47419ea8 decision=remediate topic=incident-audit offset=23
+----
++
+. If the incident has an AAP job ID, open AAP from your service details. Under *Automation Execution → Jobs*, find that job and review its template, status, parameters, and output. The template name can include an environment-specific prefix. If no job was launched, record the outcome and continue to Exercise 2.
+. After the job, return to `edge-nginx`. Compare its replicas, memory request and limit, and pod readiness with your before-run notes and the job output. Use the actual job parameters if they differ from the example.
+
+[NOTE]
+====
+The bundled playbook sets at least three replicas, a `512Mi` memory limit, and a `256Mi` request. It preserves higher replica counts; the fixed memory values may already match or be lower than the previous settings.
+====
 
 === Verify
 
 * You can explain how the OOM response differs from the CrashLoop restart.
-* The incident's AAP job ID matches the executed job.
-* A successful OOM job is followed by the expected deployment settings and ready pods. If the workflow escalates, preserve that outcome for the next module.
+* If a job ran, the incident's AAP job ID matches the executed job.
+* If a job ran, you compared the deployment before and after it. For the bundled playbook, check the replicas, memory settings, and readiness. Otherwise, record the outcome.
 
-== Exercise 2: Generate a response with Lightspeed
+== Exercise 2: Generate a CPU remediation with Lightspeed
 
-. Return to *Demo Mode* and click *Trigger Lightspeed Demo* once. Record the new *Incident ID* and *Target*.
-. Review the alert message. It describes DNS resolution failures that persist across restarts. The button publishes a controlled alert; it does not change cluster DNS.
-. Wait for the matching *Incident Timeline* card. In the application project's `agent-service` pod *Logs*, find the workflow for this incident and inspect its selected response. When the analysis selects a corrective action that needs a generated playbook, the workflow invokes Lightspeed.
-. For a Lightspeed run, follow the available log entries through generation and validation. The agent asks Lightspeed to implement the selected action, validates the returned playbook, commits it to Gitea, synchronizes the AAP project, and creates or updates an AAP job template before launching the job.
-. Open the exact *AAP Job* from the incident in AAP. Note the project and playbook path on its job template, then review the job parameters, status, and output. Generated names and playbook content vary between runs.
-. In the *OpenShift Console*, inspect the resource named by the selected action and job output. Check whether the intended change occurred and whether the affected workload is ready. If the target or expected change is unclear, ask the facilitator to help locate it before drawing a conclusion.
+The controlled alert describes a queue backing up at `microservice-a` and supplies a proposed CPU fix for downstream `microservice-b`. The intended response uses Lightspeed to generate a playbook that raises its CPU limit to `250m`; check the generated action and deployment after the AAP job. The trigger does not deploy or reset the workloads.
 
-[NOTE]
-====
-The scenario does not guarantee a generated playbook. The analysis can select an existing matching template or escalate when it cannot establish a safe corrective action. Record the actual result. A generated playbook that fails validation is not launched; generation and execution failures lead to escalation.
-====
+. In the *OpenShift Console*, select `{edge_namespace}` and open *Workloads → Deployments → microservice-b*. Record its CPU request and limit and pod readiness.
++
+For a rerun, first preserve your previous results, then click *Reset Lightspeed Demo* in the Network dashboard and wait for the rollout. This restores the initial `20m` CPU request and `25m` limit. Record the baseline again before triggering the scenario.
++
+. In the *Network dashboard*, click *Trigger CPU Misconfiguration Demo* once. Record the *Incident ID*, *Topic*, *Offset*, and *Target*. The trigger publishes a guided alert with the proposed diagnosis and action.
++
+.Example CPU demo trigger.
+image::network-cpu-trigger.png[CPU misconfiguration trigger result with incident ID topic offset and target,link=self,window=blank]
++
+. Wait for the matching *Incident Timeline* card. Record its stage, *Lightspeed Conversation*, *AAP Job*, and *SNOW* values when present.
++
+.Example CPU incident outcome with a Lightspeed conversation and AAP job.
+image::network-cpu-timeline.png[CPU incident timeline showing Lightspeed conversation and AAP job,link=self,window=blank]
++
+. In the application project's `agent-service` pod *Logs*, locate the workflow for your topic and offset. Inspect the evidence and selected action. Compare the resource values with your before-run notes.
++
+In this example, the analysis recorded a `25m` CPU limit and `20m` request for `microservice-b`, and selected a `250m` limit without changing other settings.
++
+[source,text]
+----
+Root cause analysis: {"failure_type":"CPUThrottling", ...
+  "selected_action": {
+    "goal":"Increase microservice-b CPU limit to 250m without changing requests or other settings", ...
+    "evidence":["limits: cpu: 25m, memory: 256Mi", "requests: cpu: 20m, memory: 128Mi"],
+    "parameters":{"limits.cpu":"250m"}, ...}}
+----
++
+. If the agent invokes Lightspeed, follow the entries through generation, validation, and publication. The example shows a successful path:
++
+[source,text]
+----
+Lightspeed node invoked
+ALS responded in 8.41s, conversation_id=7674870dcd8c28f7fbf85d045e84ee7bbdc3a20339020115
+Generated playbook 'hub-increase-microservice-b-cpu-limit-to-250m' passed syntax validation
+Playbook committed to Gitea: file_path=playbooks/hub-increase-microservice-b-cpu-limit-to-250m.yaml
+MCP tool get_project_update_status succeeded, response={'success': True, ... 'status': 'successful', ...}
+MCP tool upsert_job_template succeeded, response={'success': True, ... 'template_id': 20, ...}
+AAP job 93 for 'hub-increase-microservice-b-cpu-limit-to-250m' finished: success=True timed_out=False
+Audit record published incident_id=c7dbaaeb-510f-467f-a909-669087fefb6a decision=lightspeed topic=incident-audit offset=29
+----
++
+The conversation ID and job ID match the example timeline card. The workflow checks syntax, commits the playbook to Gitea, synchronizes the AAP project, and creates or updates a job template. Syntax validation does not establish that the action is appropriate.
++
+. If a job ran, open it in AAP and inspect its template, playbook path, target, status, and output. Compare the generated playbook in the available agent logs with the selected action; if its contents are unavailable, record that limitation. If no job ran, record the outcome and continue to the escalation module.
+. If a job ran, return to the `microservice-b` deployment. Check its CPU limit, CPU request, and pod readiness against your before-run notes and the job output. For the intended response, the limit is `250m` and the request remains unchanged. If the action, target, or result differs, record what actually happened.
 
 === Verify
 
-* You can distinguish selecting an existing playbook from generating one with Lightspeed.
-* For a generated response, you can locate its playbook and matching AAP job, or identify the stage that prevented execution.
-* You checked the target after execution, or identified why the workflow escalated.
+* You can connect the incident to its Lightspeed conversation and AAP job when they are present.
+* You checked the generated action and the target deployment, or identified why the workflow did not execute.
+* You distinguish a successful AAP job from verification of the intended workload change.
 
 == Troubleshooting
 
-If no incident card appears, revisit xref:04-readiness.adoc[application readiness]. If Lightspeed generation, validation, project synchronization, or AAP execution fails, retain the incident ID and the reported error for the facilitator. Do not repeatedly trigger a scenario to obtain a preferred result.
-
-Do not use *Reset Lightspeed Demo* to reset these exercises. That button restores CPU settings for a different scenario.
+If no incident card appears, revisit xref:03-environment.adoc[application readiness]. If Lightspeed generation, validation, project synchronization, or AAP execution fails, record the incident ID and the reported error.
 
 Continue to xref:07-network-escalation.adoc[follow an intentional escalation].

@@ -5,7 +5,7 @@ This file is for authors and facilitators. Deployment configuration and publicat
 == Scope and source
 
 The workshop is approximately 90 minutes for intermediate SRE, platform, and network engineers.
-It starts with working application access and covers seven modules followed by a conclusion.
+It starts with working application access and covers six modules followed by a conclusion.
 Only this Showroom repository is changed.
 
 The 2026-11-17 revision was checked against the local `ai-driven-network-remediation` checkout, including uncommitted AAP, Lightspeed, and tenant automation changes.
@@ -21,7 +21,7 @@ The `showroom:create-lab` and `showroom:verify-content` skills guide authoring a
 |Integration |Workshop requirement
 |AAP |Real controller for Network and RAN, with working inventories, credentials, execution environments, and scoped job templates
 |Lightspeed |Real Ansible Lightspeed endpoint enabled for Network playbook generation; generated playbooks validated, stored in Gitea, synced, and executed through AAP
-|Network targets |AAP jobs modify and verify the example edge nginx deployment
+|Network targets |AAP jobs modify and verify the example edge nginx deployment; the CPU demo also requires the client, `microservice-a`, and `microservice-b` workloads in the edge project
 |RAN targets |Real AAP jobs update and verify the controlled `adnr-ran-state` ConfigMap; no physical radio equipment is connected
 |ServiceNow |Network-only mock retained for escalation
 |Models |External MaaS through Llama Stack, plus both CPU Mantis predictors
@@ -29,7 +29,7 @@ The `showroom:create-lab` and `showroom:verify-content` skills guide authoring a
 |Authentication |OpenShift authentication on both dashboards; AAP console access supplied in service details
 |===
 
-The tenant bootstrap still defaults to mocks with Lightspeed disabled.
+The tenant bootstrap defaults to mocks with Lightspeed and the CPU demo disabled. Enable the CPU demo in the real AAP profile and supply tested image references before publishing Module 3; see `tenant/REAL-AAP.md` in the quickstart.
 The workshop requires `aap.enabled=true` and `lightspeed.enabled=true`, their endpoint and credential inputs, and a successful automation bootstrap.
 `tenant/bootstrap/templates/_helpers.tpl` then disables the AAP mock, enables Gitea, and sets the real AAP and Lightspeed endpoints.
 The real-AAP configuration disables the independent edge fast-path healer in `tenant/bootstrap/templates/applications.yaml` so it does not compete with the AAP exercises.
@@ -55,7 +55,7 @@ Map the actual Showroom user data to the following attributes or update the page
 |===
 
 Keep credentials in private service details and Kubernetes Secrets.
-The learner has read-only OpenShift access; the Module 5 ticket lookup is performed by an authorized facilitator.
+The learner has read-only OpenShift access; Module 4 uses the incident card and available agent logs to review escalation evidence. The dashboard does not expose mock ticket details.
 AAP access must allow inspection of the relevant templates, jobs, parameters, and output.
 
 `ui-config.yml` enables split view with an OpenShift Console tab and Terminal tab.
@@ -80,9 +80,10 @@ Paths below are relative to the quickstart repository.
 |Real integration wiring |`tenant/bootstrap/templates/_helpers.tpl`, `applications.yaml`, `tenant/automation/files/provision.py`, `tenant/access/templates/rbac.yaml`
 |Network controls |`hub/frontend/src/components/DemoTrigger.jsx`, `IncidentTimeline.jsx`; `hub/chatbot-service/src/chatbot_service/kafka.py`
 |Network decisions and generation |`hub/agent-service/src/agent_service/graph.py`, nodes `decide`, `match_guard`, `remediate`, `lightspeed`, `escalate`, `audit`
-|Network target changes |`hub/helm/charts/network/files/playbooks/restart-nginx.yaml`, `scale-up-workers.yaml`
-|Mock ticket lookup |`hub/infra/servicenow-mock/main.py`, `Containerfile`
+|Network target changes |`hub/helm/charts/network/files/playbooks/restart-nginx.yaml`, `scale-up-workers.yaml`; `e2e-showcase/cpu-misconfiguration/chart`
+|Mock ticket storage |`hub/infra/servicenow-mock/main.py`, `Containerfile`
 |RAN processing |`hub/ran-remediation-service/src/ran_remediation_service/nodes/decide.py`, `aap_client.py`; RAN frontend and predictor services
+|Normal-traffic observability |`hub/ran-anomaly-detector/src/ran_anomaly_detector/detection.py`, `server.py`; `hub/shared/src/shared/kafka/consumer.py`
 |RAN simulator action |`playbooks/ran-lab-remediation.yml`, `ran-cell-recovery.yml`, `ran-load-balance.yml`
 |===
 
@@ -94,8 +95,8 @@ Paths below are relative to the quickstart repository.
 * [ ] Verify OpenShift, both dashboards, AAP console access, runtime attributes, and read-only simulator ConfigMap access with the supplied learner identities.
 * [ ] Verify real MaaS and both predictors; confirm completed indexing and relevant retrieval for `noc_runbooks` and `telco_oran_docs`.
 * [ ] Run CrashLoop and OOM; confirm matching AAP job IDs, task output, target changes, and rollout readiness.
-* [ ] Run Lightspeed generation through validation, Gitea commit, project sync, template creation, execution, and target checks; also check escalation on generation or execution failure.
-* [ ] Run intentional escalation and the facilitator-assisted lookup of the matching mock ticket.
+* [ ] Provision the CPU demo workloads for the tenant and verify learner access to `microservice-b`. Run the CPU scenario through Lightspeed generation, validation, Gitea commit, project sync, AAP execution, and before/after CPU and readiness checks; also check escalation on generation or execution failure.
+* [ ] Run intentional escalation and verify the matching ticket reference and available handoff evidence in the dashboard and agent logs.
 * [ ] Run antenna failure and gradual congestion; confirm classifications, templates, AAP job results, and matching `adnr-ran-state` values.
 * [ ] Run normal traffic after a successful fault; confirm processing without downstream automation. The dashboard does not display normal predictions.
 * [ ] Check the rendered architecture diagram, page layout, navigation, and access links in the deployed Showroom theme.
@@ -111,9 +112,20 @@ Local validation on 2026-11-17:
 * Navigation covered all 11 active pages; local links and fragments resolved in all 12 generated HTML files, including the root redirect.
 * A second build with sample runtime attributes verified namespace substitution and all four conditional access links, including AAP, opening in new tabs.
 * Browser review verified the architecture SVG and both Mermaid diagrams in the Showroom theme. Explicit `width=100%` prevents the flowcharts from shrinking to the browser's default narrow container.
-* The facilitator's ticket-lookup Python parsed successfully. Its command block is copy-only because it runs inside the ServiceNow mock pod.
 * Independent content and source reviews found no Critical or High issues. The RAN state check follows the actual selected action when a classifier returns a different category.
 * Whitespace validation passed with `git diff --check`.
 
 Local checks cover documentation consistency and HTML generation, not live deployment correctness.
 The updated workshop still requires the publication checks above.
+
+=== Flow revision, 2026-11-18
+
+Orientation and readiness now share one module, giving six modules across ten active pages. The former `04-readiness.adoc` URL redirects to the combined opening module.
+
+* Default and sample-runtime Antora builds passed with warnings treated as failures.
+* All local links, images, and fragments resolved across 12 HTML files, including the readiness alias and root redirect.
+* Navigation covered all ten active pages; displayed module numbers run from 1 through 6. Rendered ordered lists retained the expected exercise steps.
+* Sample runtime namespaces and all four conditional access links resolved; access links open in new tabs.
+* Follow-up content reviews found no remaining issues in the revised opening, Network exercises, or normal-traffic observation. Whitespace validation passed.
+
+The normal-traffic exercise ends after a one-minute observation. The current detector exposes no per-sample normal completion result: its receive log confirms receipt only. The exercise therefore records observed behavior and leaves processing unconfirmed, rather than inferring normal classification from an unchanged dashboard. The observation interval is a workshop instruction, not a measured processing guarantee.

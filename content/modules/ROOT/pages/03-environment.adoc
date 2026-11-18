@@ -1,18 +1,40 @@
-= Module 1: Explore the applications
+= Module 1: Explore the applications and check readiness
+:page-aliases: 04-readiness.adoc
 
-Locate the services and dashboards introduced in xref:01-overview.adoc[workflow and architecture].
+Locate the controls and check dependencies before triggering an incident.
 
-== Explore the services
+== Exercise 1: Check the dashboards and predictors
 
-. In the OpenShift console, select `{app_namespace}` and open *Workloads → Pods*. Locate the dashboard services, Network agent, RAN workflow services, and shared dependencies.
-. Find the two predictor workloads, `ran-ml-service` and `ran-rca-ml-service`. Both run on CPU; the language model is accessed through the external Models-as-a-Service (MaaS) endpoint.
-. Switch to `{edge_namespace}` and find the `edge-nginx` deployment. In *Workloads → ConfigMaps*, locate `adnr-ran-state`, which records actions against the RAN simulator.
-. Open the *Network dashboard*. Locate *Demo Mode*, *Incident Timeline*, *Integration Status Matrix*, and *NOC Chat*.
-. Open the *RAN dashboard*. Locate *Demo Mode*, *Anomaly List*, and *Recent Anomalies*.
+. In the *Network dashboard*, locate *Demo Mode* and *Incident Timeline*. Open the *Integration Status Matrix* and check Kubernetes, Kafka, AAP, and ServiceNow. Ask *NOC Chat*: `MCP health status across all integrations`.
++
+.Example Integration Status Matrix.
+image::network-integration-matrix.png[Network Integration Status Matrix showing integration status and HTTP responses,link=self,window=blank]
++
+. In the *RAN dashboard*, locate *Demo Mode*, *Anomaly List*, and *Recent Anomalies*. Check for dependency warnings.
+. In the OpenShift console, select `{app_namespace}` and open *Workloads → Pods*. Check that the dashboard, Network agent, and RAN workflow containers are ready.
+. Use console resource search to find *InferenceServices* (`serving.kserve.io/v1beta1`). Open `ran-ml-service` and `ran-rca-ml-service` and confirm that each has a `Ready` condition of `True`.
+. If a required dependency is unavailable, record the error and ask the facilitator to resolve it before continuing.
+
+[NOTE]
+====
+The LokiStack integration is not used in these exercises. A `Partial data` warning naming that dependency alone does not prevent you from continuing.
+====
 
 === Verify
 
-* Both dashboards are open and you can locate their scenario controls.
-* You can find both predictor workloads, the edge deployment, and the RAN simulator state.
+* You can locate the scenario controls, and required integrations are available.
+* Workflow containers and both predictors are ready.
 
-Continue to xref:04-readiness.adoc[Module 2: Check application readiness].
+== Exercise 2: Locate automation and its targets
+
+. In `{edge_namespace}`, find *Workloads → Deployments → edge-nginx*. Under *Workloads → ConfigMaps*, locate `adnr-ran-state`, which records RAN simulator actions.
+. In the *AAP console*, locate the templates for `restart-nginx`, `scale-up-workers`, `ran-cell-recovery`, and `ran-load-balance`. Their names can include an environment-specific prefix.
+. Open a template and locate its job history. Later, use each dashboard's job ID to find the matching execution.
+
+Do not launch a job manually. The exercises trigger automation through the incident workflows.
+
+=== Verify
+
+* You can find the edge deployment, RAN simulator state, and AAP templates and job history.
+
+Continue to xref:05-network-crashloop.adoc[Module 2: Follow the Network happy path].

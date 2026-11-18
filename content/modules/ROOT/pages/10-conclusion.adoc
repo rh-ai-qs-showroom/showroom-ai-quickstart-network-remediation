@@ -6,8 +6,8 @@ You followed two AI-assisted operations workflows from an incident or KPI sample
 
 * Investigated Network incidents using Kubernetes observations, the Model Context Protocol (MCP), and retrieval-augmented generation (RAG).
 * Compared existing Ansible Automation Platform (AAP) templates for restart and resource-exhaustion responses.
-* Followed Red Hat Ansible Lightspeed playbook generation, validation, and execution through AAP when a suitable existing playbook was unavailable.
-* Inspected an intentional escalation and its mock ServiceNow ticket.
+* Explored how Red Hat Ansible Lightspeed generates a playbook for AAP execution, or recorded why the workflow took another path.
+* Inspected an intentional escalation and its mock ServiceNow ticket reference.
 * Compared RAN anomaly detection and root-cause classification with an LLM-generated explanation.
 * Followed mapped RAN automation jobs and checked the resulting simulator state.
 
